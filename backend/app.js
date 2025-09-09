@@ -1,12 +1,26 @@
 const express = require('express');
-const { sequelize, Word } = require('./db'); // Ensure your db.js exports sequelize and models
+const cors = require('cors');
+const { sequelize, Word,User } = require('./db'); // Ensure your db.js exports sequelize and models
 const wordApi = require('./routes/wordApi');
+const userApi = require('./routes/userApi');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware
+app.use(cors()); // Enable CORS for frontend communication
 app.use(express.json());
 app.use('/api/words', wordApi);
+app.use('/api/users', userApi);
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        success: true, 
+        message: 'Server is running',
+        timestamp: new Date().toISOString()
+    });
+});
 
 // An async function to connect to the DB and start the server
 const startServer = async () => {
