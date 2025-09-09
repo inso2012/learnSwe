@@ -7,6 +7,9 @@ const {
     getWordsForReview
 } = require('../models/Progress');
 
+const { UserWordProgress, Word, LearningStreak } = require('../db');
+const { Op } = require('sequelize');
+
 /**
  * Get user's learning statistics
  */
@@ -64,6 +67,14 @@ async function startQuiz(req, res) {
             return res.status(400).json({
                 success: false,
                 error: 'Quiz type and total questions are required'
+            });
+        }
+
+        const validQuizTypes = ['vocabulary', 'translation', 'multiple_choice', 'flashcard', 'mixed'];
+        if (!validQuizTypes.includes(quizType)) {
+            return res.status(400).json({
+                success: false,
+                error: `Invalid quiz type. Must be one of: ${validQuizTypes.join(', ')}`
             });
         }
         

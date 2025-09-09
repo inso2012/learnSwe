@@ -58,6 +58,18 @@ const User = sequelize.define('User', {
     currentStreak: {
         type: DataTypes.INTEGER,
         defaultValue: 0
+    },
+    longestStreak: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    totalQuizzesTaken: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0
+    },
+    averageQuizScore: {
+        type: DataTypes.FLOAT,
+        defaultValue: 0.0
     }
 }, {
     tableName: 'users',
@@ -312,12 +324,10 @@ User.hasMany(Word, {
     foreignKey: 'createdBy', 
     as: 'createdWords' 
 });
-
 Word.belongsTo(User, { 
     foreignKey: 'createdBy', 
     as: 'creator' 
 });
-
 // User-Word Progress associations
 User.hasMany(UserWordProgress, { 
     foreignKey: 'userId', 

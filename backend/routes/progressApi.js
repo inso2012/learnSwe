@@ -34,39 +34,41 @@ router.get('/review-words', getReviewWords);
  * @desc    POST Start a new quiz session
  * @access  Private
  */
-router.post('/startQuiz', startQuiz);
+router.post('/quiz/start', startQuiz);
 
 /**
  * @route   POST /api/progress/submitAnswer
  * @desc    POST Submit an answer to a quiz question
  * @access  Private
  */
-router.post('/submitAnswer', submitAnswer);
+router.post('/quiz/:sessionId/answer', submitAnswer);
 
 /**
  * @route   POST /api/progress/finishQuiz
  * @desc    POST Complete a quiz session
  * @access  Private
  */
-router.post('/finishQuiz', finishQuiz);
+router.post('/quiz/:sessionId/finish', finishQuiz);
 
 /**
  * @route   POST /api/progress/practiceWord
  * @desc    POST Record individual word practice
  * @access  Private
  */
-router.post('/practiceWord', practiceWord);
+router.post('/practice-word', practiceWord);
 
 /**
  * @route   GET /api/progress/getWordProgress
  * @desc    GET Get user's progress for a specific word
  * @access  Private
  */
-router.get('/getWordProgress', getWordProgress);
+router.get('/word/:wordId', getWordProgress);
 
 /**
  * @route   GET /api/progress/getLearningActivity
  * @desc    GET Get learning activity for dashboard charts
  * @access  Private
  */
-router.get('/getLearningActivity', getLearningActivity);
+router.get('/activity', getLearningActivity);
+
+module.exports = router;

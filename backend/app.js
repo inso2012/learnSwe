@@ -3,6 +3,7 @@ const cors = require('cors');
 const { sequelize, Word,User } = require('./db'); // Ensure your db.js exports sequelize and models
 const wordApi = require('./routes/wordApi');
 const userApi = require('./routes/userApi');
+const progressApi = require('./routes/progressApi');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,13 +13,19 @@ app.use(cors()); // Enable CORS for frontend communication
 app.use(express.json());
 app.use('/api/words', wordApi);
 app.use('/api/users', userApi);
+app.use('/api/progress', progressApi);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.status(200).json({ 
         success: true, 
         message: 'Server is running',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        endpoints: {
+            words: '/api/words',
+            users: '/api/users', 
+            progress: '/api/progress'
+        }
     });
 });
 
@@ -37,7 +44,11 @@ const startServer = async () => {
 
         // Start the server only after the DB is ready
         app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
+            console.log(`🚀 Swedish Learning API running on port ${PORT}`);
+            console.log(`📊 Health check: http://localhost:${PORT}/health`);
+            console.log(`📚 Words API: http://localhost:${PORT}/api/words`);
+            console.log(`👤 Users API: http://localhost:${PORT}/api/users`);
+            console.log(`📈 Progress API: http://localhost:${PORT}/api/progress`);
         });
     } catch (error) {
         console.error('Failed to connect to the database or sync tables:', error);

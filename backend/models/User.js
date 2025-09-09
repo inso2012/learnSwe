@@ -2,6 +2,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User } = require('../db');
+const { Op } = require('sequelize');
 
 /**
  * Create a new user
@@ -14,7 +15,7 @@ async function createUser(userData) {
     // Check if user already exists
     const existingUser = await User.findOne({ 
         where: { 
-            $or: [{ email }, { username }] 
+            [Op.or]: [{ email }, { username }] 
         } 
     });
     
