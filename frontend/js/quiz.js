@@ -102,7 +102,7 @@ class SwedishQuiz {
     async checkAuth() {
         const token = localStorage.getItem('swedishLearningToken');
         if (!token) {
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
             return;
         }
         
@@ -121,7 +121,7 @@ class SwedishQuiz {
             this.userWelcome.textContent = `Welcome, ${data.data.username}!`;
         } catch (error) {
             console.error('Auth check failed:', error);
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }
     }
     
@@ -414,92 +414,122 @@ class SwedishQuiz {
             this.progressUpdates.style.display = 'none';
             return;
         }
-        this.progressUpdates.style.display = 'block';
-        this.progressList.innerHTML = '';   
-        masteryUpdates.forEach(update => {
-            const listItem = document.createElement('li');
-            listItem.textContent = `Word "${update.question.question}" improved your mastery!`;
-            this.progressList.appendChild(listItem);
-        });
+        
+        this.progressList.innerHTML = masteryUpdates.map(update => `
+            <div class="progress-item">
+                <span class="word">${update.question.question} → ${update.correctAnswer}</span>
+                <span class="progress-badge">Improved!</span>
+            </div>
+        `).join('');
     }
     
-    formatTime(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}m ${secs}s`;
-    }       
-    startTimer() {
-        this.timerInterval = setInterval(() => {
-            const elapsed = Math.round((new Date() - this.startTime) / 1000);
-            this.timer.textContent = this.formatTime(elapsed);
-        }, 1000);
-    }
-    stopTimer() {
-        clearInterval(this.timerInterval);
-    }
-    resetQuiz() {
-        this.stopTimer();
-        this.currentQuiz = null;
-        this.currentQuestionIndex = 0;
-        this.selectedAnswer = null;
-        this.startTime = null;
-        this.questionStartTime = null;
-        this.quizSession = null;
-        this.userAnswers = [];  
-        this.setupSection.classList.remove('hidden');
-        this.quizSection.classList.add('hidden');
-        this.resultsSection.classList.add('hidden');
-        this.progressFill.style.width = '0%';   
-        this.timer.textContent = '0m 0s';
-        this.currentScore.textContent = 'Score: 0%';
-    }   
     showAnswerReview() {
-        this.reviewModal.classList.remove('hidden');
         const reviewContent = document.getElementById('reviewContent');
-        reviewContent.innerHTML = '';                       
-        this.userAnswers.forEach((answer, index) => {
-            const question = answer.question;
-            const reviewItem = document.createElement('div');   
-            reviewItem.className = 'review-item';
-            reviewItem.innerHTML = `
-                <h3>Question ${index + 1}: ${question.question}</h3>
-                <p>Your Answer: <strong>${answer.userAnswer}</strong> ${answer.isCorrect ? '✅' : '❌'}</p>
-                <p>Correct Answer: <strong>${question.correctAnswer}</strong></p>       
-                <p>Time Taken: ${answer.answerTime}s</p>
-                <hr>
-            `;
-            reviewContent.appendChild(reviewItem);  
-        });
+        
+        reviewContent.innerHTML = `
+            <div class="review-summary">
+                <h4>Answer Summary</h4>
+                <p>Correct: ${this.userAnswers.filter(a => a.isCorrect).length} | 
+                   Incorrect: ${this.userAnswers.filter(a => !a.isCorrect).length}</p>
+            </div>
+            <div class="review-questions">
+                ${this.userAnswers.map((answer, index) => `
+                    <div class="review-question ${answer.isCorrect ? 'correct' : 'incorrect'}">
+                        <div class="review-header">
+                            <span class="question-number">Q${index + 1}</span>
+                            <span class="result-icon">${answer.isCorrect ? '✅' : '❌'}</span>
+                            <span class="time-taken">${answer.answerTime}s</span>
+                        </div>
+                        <div class="review-content">
+                            <div class="question-text">${answer.question.question}</div>
+                            <div class="answer-details">
+                                <div class="your-answer ${answer.isCorrect ? 'correct' : 'incorrect'}">
+                                    Your answer: ${answer.userAnswer}
+                                </div>
+                                ${!answer.isCorrect ? `
+                                    <div class="correct-answer">
+                                        Correct answer: ${answer.correctAnswer}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        this.reviewModal.classList.remove('hidden');
     }
+    
     closeReviewModal() {
         this.reviewModal.classList.add('hidden');
     }
-    practiceWeakWords() {
-        const weakWords = this.userAnswers
-            .filter(a => !a.isCorrect)
-            .map(a => a.question.wordId);   
-        if (weakWords.length === 0) {
-            alert('No weak words to practice! Great job!');
+    
+    async practiceWeakWords() {
+        const incorrectWords = this.userAnswers
+            .filter(answer => !answer.isCorrect)
+            .map(answer => answer.wordId);
+        
+        if (incorrectWords.length === 0) {
+            alert('Great job! You got all questions correct!');
             return;
-        }   
-        // Store weak words in localStorage for practice session
-        localStorage.setItem('weakWords', JSON.stringify(weakWords));
-        window.location.href = 'practice.html';
+        }
+        
+        // Redirect to flashcards with weak words (would need backend support)
+        alert(`Let's practice these ${incorrectWords.length} words you missed!`);
+        // In a full implementation, you'd pass these word IDs to flashcards
+        window.location.href = 'flashcards.html';
     }
-    logout() {
-        localStorage.removeItem('swedishLearningToken');
-        window.location.href = 'login.html';
+    
+    startTimer() {
+        this.timerInterval = setInterval(() => {
+            if (this.startTime) {
+                const elapsed = Math.floor((new Date() - this.startTime) / 1000);
+                this.timer.textContent = this.formatTime(elapsed);
+            }
+        }, 1000);
     }
+    
+    stopTimer() {
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+    }
+    
+    formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+    
+    resetQuiz() {
+        this.stopTimer();
+        this.setupSection.classList.remove('hidden');
+        this.quizSection.classList.add('hidden');
+        this.resultsSection.classList.add('hidden');
+        this.currentQuiz = null;
+        this.quizSession = null;
+        this.userAnswers = [];
+    }
+    
     showLoading(show, message = 'Loading...') {
         if (show) {
             this.loadingText.textContent = message;
             this.loadingOverlay.classList.remove('hidden');
         } else {
             this.loadingOverlay.classList.add('hidden');
-        }       
+        }
+    }
+    
+    logout() {
+        this.stopTimer();
+        localStorage.removeItem('swedishLearningToken');
+        window.location.href = 'index.html';
     }
 }
-window.addEventListener('DOMContentLoaded', () => {
+
+// Initialize the quiz system when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
     new SwedishQuiz();
 });
-

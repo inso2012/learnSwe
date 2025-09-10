@@ -70,110 +70,111 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('auth-form');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            const submitButton = document.getElementById('submit-button');
-            const toggleLink = document.getElementById('toggle-link');
-            const formTitle = document.getElementById('form-title');
-            const errorMessage = document.getElementById('error-message');
+        // Get all elements
+        const form = document.getElementById('auth-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const submitButton = document.getElementById('submit-button');
+        const toggleLink = document.getElementById('toggle-link');
+        const formTitle = document.getElementById('form-title');
+        const errorMessage = document.getElementById('error-message');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalContent = document.getElementById('modal-content');
+        const modalClose = document.getElementById('modal-close');
+    
+        // API base URL
+        const API_BASE_URL = 'http://localhost:3000/api';
+        
+        let isLogin = true;
+
+        // Show modal function
+        function showModal(title, message) {
+            modalTitle.textContent = title;
+            modalContent.textContent = message;
+            modal.classList.remove('hidden');
+        }
+
+        // Hide modal function
+        modalClose.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+
+        // Add the form submit handler
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    console.log('Form submitted');
+    
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
+    
+    if (!email || !password) {
+        showModal('Error', 'Please enter both email and password');
+        return;
+    }
+    
+    try {
+        console.log('Sending login request...');
+        const response = await fetch(`${API_BASE_URL}/users/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+        console.log('Login response:', data); // Debug log
+
+        if (response.ok) {
+            console.log('Login successful, checking token...');
             
-            // Modal elements
-            const modal = document.getElementById('modal');
-            const modalTitle = document.getElementById('modal-title');
-            const modalContent = document.getElementById('modal-content');
-            const modalCloseButton = document.getElementById('modal-close');
+            // Extract token from response data structure
+            const token = data.data.token || data.token;
+            console.log('Extracted token:', token);
 
-            let isLogin = true;
-
-            const API_BASE_URL = 'http://localhost:3000/api'; // Replace with your actual backend URL
-
-            // Show custom modal
-            function showModal(title, content) {
-                modalTitle.textContent = title;
-                modalContent.textContent = content;
-                modal.classList.remove('hidden');
+            if (!token) {
+                console.error('No token in response:', data);
+                showModal('Error', 'Invalid server response');
+                return;
             }
 
-            // Hide custom modal
-            modalCloseButton.addEventListener('click', () => {
-                modal.classList.add('hidden');
-            });
-
-            // Handle form submission (Login or Register)
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const email = emailInput.value.trim();
-                const password = passwordInput.value.trim();
-                
-                if (!email || !password) {
-                    showModal('Validation Error', 'Please enter both email and password.');
-                    return;
-                }
-                
-                let endpoint = isLogin ? 'auth/login' : 'auth/register';
-                
-                try {
-                    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ email, password }),
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok) {
-                        if (isLogin) {
-                            localStorage.setItem('token', data.token);
-                            localStorage.setItem('userId', data.userId);
-                            showModal('Success', 'Login successful!');
-                            // Redirect to flashcards page
-                            window.location.href = 'flashcards.html';
-                        } else {
-                            showModal('Success', 'Registration successful! You can now log in.');
-                            toggleForm(true); // Switch to login form
-                        }
-                    } else {
-                        errorMessage.textContent = data.error || 'Something went wrong.';
-                        errorMessage.classList.remove('hidden');
-                        showModal('Error', data.error || 'Something went wrong. Please try again.');
-                    }
-                } catch (error) {
-                    showModal('Network Error', 'Failed to connect to the server. Please check your network connection and server status.');
-                    console.error('Network Error:', error);
-                }
-            });
-
-            // Toggle between Login and Register forms
-            function toggleForm(loginMode) {
-                isLogin = loginMode;
-                if (isLogin) {
-                    formTitle.textContent = 'Login';
-                    submitButton.textContent = 'Login';
-                    toggleLink.innerHTML = "Don't have an account? <span class='underline'>Sign Up</span>";
-                } else {
-                    formTitle.textContent = 'Sign Up';
-                    submitButton.textContent = 'Register';
-                    toggleLink.innerHTML = "Already have an account? <span class='underline'>Login</span>";
-                }
-                errorMessage.classList.add('hidden');
-            }
-
-            toggleLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                toggleForm(!isLogin);
-            });
+            console.log('Storing token...');
+            localStorage.clear(); // Clear any old data
+            localStorage.setItem('swedishLearningToken', token);
             
-            // Check for existing token on page load
-            const token = localStorage.getItem('token');
-            if (token) {
-                // You could add a check here to validate the token before redirecting
-                // For now, we'll just redirect
-                window.location.href = 'flashcards.html';
+            // Verify token was stored
+            const storedToken = localStorage.getItem('swedishLearningToken');
+            console.log('Stored token:', storedToken);
+
+            if (storedToken) {
+                showModal('Success', 'Login successful!');
+                setTimeout(() => {
+                    window.location.href = 'flashcards.html';
+                }, 1500);
+            } else {
+                showModal('Error', 'Failed to store authentication token');
             }
+        } else {
+            console.error('Login failed:', data.error);
+            showModal('Error', data.error || 'Login failed');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        showModal('Network Error', 'Failed to connect to server');
+        }
+    });
+
+        // Toggle between Login and Register
+        toggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLogin = !isLogin;
+            formTitle.textContent = isLogin ? 'Login' : 'Sign Up';
+            submitButton.textContent = isLogin ? 'Login' : 'Register';
+            toggleLink.innerHTML = isLogin ? 
+                "Don't have an account? <span class='underline'>Sign Up</span>" : 
+                "Already have an account? <span class='underline'>Login</span>";
+            });
         });
     </script>
 

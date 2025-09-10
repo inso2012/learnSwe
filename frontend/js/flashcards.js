@@ -1,21 +1,45 @@
 // Flashcard Learning System
 class FlashcardLearning {
     constructor() {
-        this.currentCards = [];
-        this.currentCardIndex = 0;
-        this.sessionStats = {
-            correct: 0,
-            incorrect: 0,
-            startTime: null,
-            results: []
-        };
-        this.isAnswerShown = false;
-        
-        this.initializeElements();
-        this.attachEventListeners();
-        this.checkAuth();
-    }
+    this.currentCards = [];
+    this.currentCardIndex = 0;
+    this.sessionStats = {
+        correct: 0,
+        incorrect: 0,
+        startTime: null,
+        results: []
+    };
+    this.isAnswerShown = false;
     
+    this.initializeElements();
+    this.attachEventListeners();
+
+    // Call the async initialization method
+    this.init();
+    
+    // // Immediate async authentication check
+    // (async () => {
+    //     const isAuthenticated = await this.checkAuth();
+    //     if (!isAuthenticated) {
+    //         return; // Stop initialization if not authenticated
+    //     }
+    // })();
+}
+    async init() {
+        this.showLoading(true);
+        try {
+            const isAuthenticated = await this.checkAuth();
+            if (isAuthenticated) {
+                // Hide the loading state and show the main page content
+                document.body.classList.remove('loading');
+                this.showLoading(false);
+            }
+        } catch (error) {
+            console.error('Initialization failed:', error);
+            this.logout(); // Logout on any auth error
+        }
+    }    
+
     initializeElements() {
         // Setup elements
         this.setupSection = document.getElementById('setupSection');
@@ -104,29 +128,47 @@ class FlashcardLearning {
     
     async checkAuth() {
         const token = localStorage.getItem('swedishLearningToken');
+        console.log('Checking token in flashcards:', token);
+
         if (!token) {
-            window.location.href = 'login.html';
-            return;
+            console.log('No token found, redirecting to login');
+            window.location.href = 'index.html'; // Use relative path
+            return false;
         }
-        
+
         try {
-            const response = await fetch('/api/users/profile', {
+            const response = await fetch('http://localhost:3000/api/users/profile', {
+                method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
             });
-            
             if (!response.ok) {
-                throw new Error('Authentication failed');
-            }
+                console.error('Profile fetch failed with status:', response.status);
+                console.log("token:", token);
+                // The server returned a non-200 status, indicating a bad token
+                throw new Error('Profile fetch failed');
             
+            }
             const data = await response.json();
-            this.userWelcome.textContent = `Welcome, ${data.data.username}!`;
+            console.log('Profile response:', data);
+
+            // Update welcome message
+            if (this.userWelcome && data.data) {
+                this.userWelcome.textContent = `Welcome, ${data.data.email || 'User'}!`;
+            }
+
+            return true;
+
         } catch (error) {
             console.error('Auth check failed:', error);
-            window.location.href = 'login.html';
+            // Clear token on auth failure
+            // localStorage.removeItem('swedishLearningToken');
+            // window.location.href = 'index.html'; // Use relative path
+            return false;
         }
-    }
+}   
     
     async startLearningSession() {
         this.showLoading(true);
@@ -361,7 +403,7 @@ class FlashcardLearning {
     
     logout() {
         localStorage.removeItem('swedishLearningToken');
-        window.location.href = 'login.html';
+        window.location.href = 'index.html'; // Use relative path
     }
 }
 

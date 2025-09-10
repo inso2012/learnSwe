@@ -67,7 +67,7 @@ async function loginUser(email, password) {
             email: user.email,
             username: user.username
         },
-        process.env.JWT_SECRET || 'your-secret-key',
+        process.env.JWT_SECRET,
         { expiresIn: '24h' }
     );
     

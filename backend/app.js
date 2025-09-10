@@ -8,6 +8,7 @@ const learningApi = require('./routes/learningApi');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const path = require('path');
 
 // Middleware
 app.use(cors()); // Enable CORS for frontend communication
@@ -16,6 +17,8 @@ app.use('/api/words', wordApi);
 app.use('/api/users', userApi);
 app.use('/api/progress', progressApi);
 app.use('/api/learning', learningApi);
+//server frontend from backend
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
