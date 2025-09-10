@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swedish Learning - Quiz</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🇸🇪 Swedish Quiz</h1>
+            <div class="user-info">
+                <span id="userWelcome">Welcome!</span>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="index.html">Dashboard</a>
+            <a href="flashcards.html">Flashcards</a>
+            <a href="quiz.html" class="active">Quiz</a>
+            <a href="progress.html">Progress</a>
+        </nav>
+
+        <!-- Quiz Setup -->
+        <section id="setupSection" class="setup-section">
+            <div class="setup-card">
+                <h2>Create Your Quiz</h2>
+                <div class="setup-options">
+                    <div class="option-group">
+                        <label for="questionCount">Number of Questions:</label>
+                        <select id="questionCount">
+                            <option value="5">5 questions</option>
+                            <option value="10" selected>10 questions</option>
+                            <option value="15">15 questions</option>
+                            <option value="20">20 questions</option>
+                        </select>
+                    </div>
+                    
+                    <div class="option-group">
+                        <label for="quizType">Quiz Type:</label>
+                        <select id="quizType">
+                            <option value="mixed" selected>Mixed (Both Directions)</option>
+                            <option value="swedish-to-english">Swedish → English</option>
+                            <option value="english-to-swedish">English → Swedish</option>
+                        </select>
+                    </div>
+                    
+                    <div class="option-group">
+                        <label for="difficulty">Difficulty Level:</label>
+                        <select id="difficulty">
+                            <option value="all" selected>All Levels</option>
+                            <option value="1">Beginner (1)</option>
+                            <option value="2">Elementary (2)</option>
+                            <option value="3">Intermediate (3)</option>
+                            <option value="4">Advanced (4)</option>
+                            <option value="5">Expert (5)</option>
+                        </select>
+                    </div>
+                    
+                    <button id="startQuizBtn" class="btn btn-primary">Start Quiz</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quiz Interface -->
+        <section id="quizSection" class="quiz-section hidden">
+            <div class="quiz-header">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="quiz-info">
+                    <span id="questionCounter">Question 1 of 10</span>
+                    <span id="timer">00:00</span>
+                    <span id="currentScore">Score: 0%</span>
+                </div>
+            </div>
+
+            <div class="question-container">
+                <div class="question-header">
+                    <span class="question-type" id="questionType">Swedish → English</span>
+                    <span class="word-type-badge" id="wordTypeBadge">noun</span>
+                    <span class="difficulty-badge" id="difficultyBadge">Level 1</span>
+                </div>
+                
+                <div class="question">
+                    <h3 id="questionText">Loading question...</h3>
+                    <p class="question-hint">Choose the correct translation:</p>
+                </div>
+                
+                <div class="answer-options" id="answerOptions">
+                    <!-- Options will be dynamically added -->
+                </div>
+                
+                <div class="question-actions">
+                    <button id="submitAnswerBtn" class="btn btn-primary" disabled>Submit Answer</button>
+                </div>
+            </div>
+
+            <div class="answer-feedback hidden" id="answerFeedback">
+                <div class="feedback-content">
+                    <div class="feedback-icon" id="feedbackIcon">✅</div>
+                    <div class="feedback-text" id="feedbackText">Correct!</div>
+                    <div class="feedback-details" id="feedbackDetails">
+                        The Swedish word "hej" means "hello" in English.
+                    </div>
+                </div>
+                <button id="nextQuestionBtn" class="btn btn-primary">Next Question</button>
+            </div>
+        </section>
+
+        <!-- Quiz Results -->
+        <section id="resultsSection" class="results-section hidden">
+            <div class="results-card">
+                <h2>🎯 Quiz Complete!</h2>
+                
+                <div class="final-score">
+                    <div class="score-circle">
+                        <span class="score-percentage" id="finalScorePercentage">85%</span>
+                        <span class="score-label">Final Score</span>
+                    </div>
+                </div>
+                
+                <div class="results-stats">
+                    <div class="result-stat">
+                        <div class="stat-value" id="correctAnswers">8</div>
+                        <div class="stat-label">Correct</div>
+                    </div>
+                    <div class="result-stat">
+                        <div class="stat-value" id="incorrectAnswers">2</div>
+                        <div class="stat-label">Incorrect</div>
+                    </div>
+                    <div class="result-stat">
+                        <div class="stat-value" id="totalTime">02:45</div>
+                        <div class="stat-label">Time</div>
+                    </div>
+                    <div class="result-stat">
+                        <div class="stat-value" id="averageTime">16.5s</div>
+                        <div class="stat-label">Avg/Question</div>
+                    </div>
+                </div>
+                
+                <div class="progress-updates" id="progressUpdates">
+                    <h3>📈 Progress Updates</h3>
+                    <div class="progress-list" id="progressList">
+                        <!-- Progress updates will be shown here -->
+                    </div>
+                </div>
+                
+                <div class="results-actions">
+                    <button id="reviewAnswersBtn" class="btn btn-secondary">Review Answers</button>
+                    <button id="newQuizBtn" class="btn btn-primary">New Quiz</button>
+                    <button id="practiceWeakBtn" class="btn btn-accent">Practice Weak Words</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Answer Review Modal -->
+        <div id="reviewModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Answer Review</h3>
+                    <button class="modal-close" id="closeReviewBtn">&times;</button>
+                </div>
+                <div class="modal-body" id="reviewContent">
+                    <!-- Review content will be dynamically added -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-spinner"></div>
+            <p id="loadingText">Generating quiz...</p>
+        </div>
+    </div>
+
+    <script src="js/quiz.js"></script>
+</body>
+</html>

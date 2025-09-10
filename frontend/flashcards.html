@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swedish Learning - Flashcards</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🇸🇪 Swedish Flashcards</h1>
+            <div class="user-info">
+                <span id="userWelcome">Welcome!</span>
+                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="index.html">Dashboard</a>
+            <a href="flashcards.html" class="active">Flashcards</a>
+            <a href="quiz.html">Quiz</a>
+            <a href="progress.html">Progress</a>
+        </nav>
+
+        <!-- Learning Session Setup -->
+        <section id="setupSection" class="setup-section">
+            <div class="setup-card">
+                <h2>Start Learning Session</h2>
+                <div class="setup-options">
+                    <div class="option-group">
+                        <label for="cardCount">Number of Cards:</label>
+                        <select id="cardCount">
+                            <option value="5">5 cards</option>
+                            <option value="10" selected>10 cards</option>
+                            <option value="15">15 cards</option>
+                            <option value="20">20 cards</option>
+                        </select>
+                    </div>
+                    
+                    <div class="option-group">
+                        <label for="difficulty">Difficulty Level:</label>
+                        <select id="difficulty">
+                            <option value="all">All Levels</option>
+                            <option value="1">Beginner (1)</option>
+                            <option value="2">Elementary (2)</option>
+                            <option value="3">Intermediate (3)</option>
+                            <option value="4">Advanced (4)</option>
+                            <option value="5">Expert (5)</option>
+                        </select>
+                    </div>
+                    
+                    <button id="startLearningBtn" class="btn btn-primary">Start Learning</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Flashcard Learning Interface -->
+        <section id="learningSection" class="learning-section hidden">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+                <span class="progress-text" id="progressText">0 / 0</span>
+            </div>
+
+            <div class="flashcard-container">
+                <div class="flashcard" id="flashcard">
+                    <div class="card-front" id="cardFront">
+                        <div class="word-type" id="wordType">noun</div>
+                        <div class="word-text" id="wordText">Loading...</div>
+                        <div class="difficulty-badge" id="difficultyBadge">Level 1</div>
+                    </div>
+                    <div class="card-back hidden" id="cardBack">
+                        <div class="translation" id="translation">Translation</div>
+                        <div class="mastery-info" id="masteryInfo">
+                            <span class="mastery-level">New Word</span>
+                            <span class="success-rate">Success: 0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    <button id="showAnswerBtn" class="btn btn-secondary">Show Answer</button>
+                    <div class="answer-buttons hidden" id="answerButtons">
+                        <button id="incorrectBtn" class="btn btn-incorrect">❌ Incorrect</button>
+                        <button id="correctBtn" class="btn btn-correct">✅ Correct</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="session-stats">
+                <div class="stat">
+                    <span class="stat-label">Correct:</span>
+                    <span class="stat-value" id="correctCount">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Incorrect:</span>
+                    <span class="stat-value" id="incorrectCount">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Accuracy:</span>
+                    <span class="stat-value" id="accuracy">0%</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Session Complete -->
+        <section id="completionSection" class="completion-section hidden">
+            <div class="completion-card">
+                <h2>🎉 Session Complete!</h2>
+                <div class="final-stats">
+                    <div class="final-stat">
+                        <div class="final-stat-value" id="finalScore">0%</div>
+                        <div class="final-stat-label">Final Score</div>
+                    </div>
+                    <div class="final-stat">
+                        <div class="final-stat-value" id="finalCorrect">0</div>
+                        <div class="final-stat-label">Correct Answers</div>
+                    </div>
+                    <div class="final-stat">
+                        <div class="final-stat-value" id="finalTime">0:00</div>
+                        <div class="final-stat-label">Time Spent</div>
+                    </div>
+                </div>
+                
+                <div class="completion-actions">
+                    <button id="newSessionBtn" class="btn btn-primary">New Session</button>
+                    <button id="reviewMistakesBtn" class="btn btn-secondary">Review Mistakes</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay hidden">
+            <div class="loading-spinner"></div>
+            <p>Loading flashcards...</p>
+        </div>
+    </div>
+
+    <script src="js/flashcards.js"></script>
+</body>
+</html>
