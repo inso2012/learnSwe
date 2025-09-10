@@ -137,7 +137,7 @@ class FlashcardLearning {
         }
 
         try {
-            const response = await fetch('http://localhost:3000/api/users/profile', {
+            const response = await fetch('/api/users/profile', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -176,10 +176,15 @@ class FlashcardLearning {
         try {
             const limit = this.cardCountSelect.value;
             const difficulty = this.difficultySelect.value;
-            
+            const token = localStorage.getItem('swedishLearningToken');
+            console.log('Checking token in flashcards:', token);
+            console.log('limit:', limit);
+            console.log('difficulty:', difficulty);
+
             const response = await fetch(`/api/learning/flashcards?limit=${limit}&difficulty=${difficulty}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('swedishLearningToken')}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
             });
             
@@ -320,13 +325,15 @@ class FlashcardLearning {
         try {
             const endTime = new Date();
             const timeSpent = Math.round((endTime - this.sessionStats.startTime) / 1000);
+            const token = localStorage.getItem('swedishLearningToken');
+            console.log('Checking token in flashcards:', token);
             
             // Submit session results to backend
             const response = await fetch('/api/learning/session/submit', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('swedishLearningToken')}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     sessionType: 'flashcards',

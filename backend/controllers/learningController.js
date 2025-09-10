@@ -9,7 +9,7 @@ const { Op } = require('sequelize');
 async function getFlashcards(req, res) {
     try {
         const userId = req.userId;
-        const limit = parseInt(req.query.limit) || 10;
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 10, 1), 50); // Min 1, Max 50
         const difficulty = req.query.difficulty; // 1-5 or 'all'
         
         // Build word filter
@@ -36,8 +36,11 @@ async function getFlashcards(req, res) {
             }],
             order: [['nextReviewDate', 'ASC']],
             limit: Math.ceil(limit * 0.7) // 70% review words
+        }).catch(error => {
+        console.error('Error fetching review words:', error);
+        return [];
         });
-        
+
         const reviewWordsCount = reviewWords.length;
         const remainingSlots = limit - reviewWordsCount;
         
