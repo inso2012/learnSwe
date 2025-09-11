@@ -28,10 +28,55 @@
         </div>
     </nav>
     <div class="container">
-        <div class="word-list">
-            <!-- Words will be dynamically loaded here -->
+        <div class="words-controls">
+            <div class="controls-left">
+                <div class="sort-control">
+                    <label for="sortBy">Sort by:</label>
+                    <select id="sortBy" class="sort-select">
+                        <option value="swedish-asc">Swedish (A-Z)</option>
+                        <option value="swedish-desc">Swedish (Z-A)</option>
+                        <option value="english-asc">English (A-Z)</option>
+                        <option value="english-desc">English (Z-A)</option>
+                    </select>
+                </div>
+                <div class="page-size-control">
+                    <label for="pageSize">Words per page:</label>
+                    <select id="pageSize" class="page-size-select">
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
+            <div class="pagination-info">
+                Showing <span id="startRange">0</span> - <span id="endRange">0</span> of <span id="totalWords">0</span> words
+            </div>
+        </div>
+
+        <div class="words-table-container">
+            <table class="words-table">
+                <thead>
+                    <tr>
+                        <th>Swedish</th>
+                        <th>English</th>
+                        <th>Type</th>
+                        <th>Example</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="wordsTableBody">
+                    <!-- Words will be dynamically loaded here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-controls">
+            <button id="prevPage" class="pagination-button" disabled>&lt; Previous</button>
+            <div id="pageNumbers" class="page-numbers"></div>
+            <button id="nextPage" class="pagination-button" disabled>Next &gt;</button>
         </div>
     </div>
+    <link rel="stylesheet" href="css/words.css">
     <script src="js/words.js" defer></script>
 </body>
 </html>
