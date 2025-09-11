@@ -1,7 +1,6 @@
 // Flashcard Learning System
 class FlashcardLearning {
     constructor() {
-        // Initialize state
         this.currentCards = [];
         this.currentCardIndex = 0;
         this.sessionStats = {
@@ -14,35 +13,41 @@ class FlashcardLearning {
         this.correctAnswerIndex = null;
         this.isProcessingAnswer = false;
         
-        // Initialize UI elements and attach event listeners
         this.initializeElements();
         this.attachEventListeners();
         
-        // Set initial visibility
-        if (this.setupSection) {
-            this.setupSection.classList.remove('hidden');
+        // Show setup section by default and hide others
+        this.setupSection.classList.remove('hidden');
+        this.learningSection.classList.add('hidden');
+        this.completionSection.classList.add('hidden');
+        
+        // Call the async initialization method
+        this.init();
+    }
+    
+    async init() {
+        this.showLoading(true);
+        try {
+            const isAuthenticated = await this.checkAuth();
+            if (isAuthenticated) {
+                document.body.classList.remove('loading');
+                this.showLoading(false);
+            }
+        } catch (error) {
+            console.error('Initialization failed:', error);
+            this.logout();
         }
-        if (this.learningSection) {
-            this.learningSection.classList.add('hidden');
-        }
-        if (this.completionSection) {
-            this.completionSection.classList.add('hidden');
-        }
-
-        // Check authentication immediately
-        this.checkAuthAndRedirect();
     }
 
-    async checkAuthAndRedirect() {
+    async checkAuth() {
         const token = localStorage.getItem('swedishLearningToken');
         if (!token) {
             window.location.href = 'index.html';
-            return;
+            return false;
         }
 
         try {
             const response = await fetch('/api/users/profile', {
-                method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -50,33 +55,32 @@ class FlashcardLearning {
             });
 
             if (!response.ok) {
-                throw new Error('Unauthorized');
+                throw new Error('Profile fetch failed');
             }
 
             const data = await response.json();
             if (this.userWelcome && data.data) {
-                this.userWelcome.textContent = `Welcome, ${data.data.email}!`;
+                this.userWelcome.textContent = `Welcome, ${data.data.email || 'User'}!`;
             }
+            return true;
+
         } catch (error) {
             console.error('Auth check failed:', error);
-            localStorage.removeItem('swedishLearningToken');
-            window.location.href = 'index.html';
+            return false;
         }
     }
-    
+
     initializeElements() {
-        // Setup elements
+        // Initialize all UI elements
         this.setupSection = document.getElementById('setupSection');
         this.learningSection = document.getElementById('learningSection');
         this.completionSection = document.getElementById('completionSection');
         this.loadingOverlay = document.getElementById('loadingOverlay');
         
-        // Setup controls
         this.cardCountSelect = document.getElementById('cardCount');
         this.difficultySelect = document.getElementById('difficulty');
         this.startLearningBtn = document.getElementById('startLearningBtn');
         
-        // Learning elements
         this.flashcard = document.getElementById('flashcard');
         this.cardFront = document.getElementById('cardFront');
         this.cardBack = document.getElementById('cardBack');
@@ -86,43 +90,29 @@ class FlashcardLearning {
         this.translation = document.getElementById('translation');
         this.masteryInfo = document.getElementById('masteryInfo');
         
-        // Progress elements
         this.progressFill = document.getElementById('progressFill');
         this.progressText = document.getElementById('progressText');
         
-        // Action buttons
         this.showAnswerBtn = document.getElementById('showAnswerBtn');
         this.answerButtons = document.getElementById('answerButtons');
-        this.correctBtn = document.getElementById('correctBtn');
-        this.incorrectBtn = document.getElementById('incorrectBtn');
         
-        // Stats elements
         this.correctCount = document.getElementById('correctCount');
         this.incorrectCount = document.getElementById('incorrectCount');
         this.accuracy = document.getElementById('accuracy');
         
-        // Completion elements
         this.finalScore = document.getElementById('finalScore');
         this.finalCorrect = document.getElementById('finalCorrect');
         this.finalTime = document.getElementById('finalTime');
         this.newSessionBtn = document.getElementById('newSessionBtn');
         this.reviewMistakesBtn = document.getElementById('reviewMistakesBtn');
         
-        // User elements
         this.userWelcome = document.getElementById('userWelcome');
         this.logoutBtn = document.getElementById('logoutBtn');
-
-        if (!this.logoutBtn || !this.userWelcome) {
-            console.error('Critical UI elements missing');
-        }
     }
-    
+
     attachEventListeners() {
         if (this.startLearningBtn) {
-            this.startLearningBtn.addEventListener('click', () => {
-                console.log('Start Learning button clicked');
-                this.startLearningSession();
-            });
+            this.startLearningBtn.addEventListener('click', () => this.startLearningSession());
         }
 
         if (this.newSessionBtn) {
@@ -135,16 +125,14 @@ class FlashcardLearning {
 
         if (this.logoutBtn) {
             this.logoutBtn.addEventListener('click', () => this.logout());
-            console.log('Logout button listener attached');
         }
 
         if (this.showAnswerBtn) {
             this.showAnswerBtn.addEventListener('click', () => this.showAnswer());
         }
 
-        // Add keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            if (this.learningSection && this.learningSection.classList.contains('hidden')) return;
+            if (this.learningSection.classList.contains('hidden')) return;
             
             switch(e.key) {
                 case ' ':
@@ -162,16 +150,15 @@ class FlashcardLearning {
                     if (this.isAnswerShown) {
                         const index = parseInt(e.key) - 1;
                         if (index >= 0 && index < 4) {
-                            this.handleAnswer(index === this.correctAnswerIndex);
+                            this.handleAnswer(index);
                         }
                     }
                     break;
             }
         });
     }
-    
+
     async startLearningSession() {
-        console.log('Starting learning session...');
         if (!this.cardCountSelect || !this.difficultySelect) {
             console.error('Required elements not found');
             alert('Error: Required elements not found. Please refresh the page.');
@@ -186,12 +173,9 @@ class FlashcardLearning {
             const token = localStorage.getItem('swedishLearningToken');
             
             if (!token) {
-                console.error('No token found');
                 window.location.href = 'index.html';
                 return;
             }
-
-            console.log('Fetching flashcards with:', { limit, difficulty });
 
             const response = await fetch(`/api/learning/flashcards?limit=${limit}&difficulty=${difficulty}`, {
                 headers: {
@@ -205,14 +189,11 @@ class FlashcardLearning {
             }
             
             const data = await response.json();
-            console.log('Received flashcards:', data);
-            
             if (!data.success) {
                 throw new Error(data.error || 'Failed to fetch flashcards');
             }
             
             this.currentCards = data.data;
-            
             if (this.currentCards.length === 0) {
                 alert('No flashcards available. Please add some words first!');
                 return;
@@ -220,7 +201,7 @@ class FlashcardLearning {
             
             this.resetSessionStats();
             this.showLearningInterface();
-            this.displayCurrentCard();
+            await this.displayCurrentCard();
             
         } catch (error) {
             console.error('Error starting learning session:', error);
@@ -241,7 +222,7 @@ class FlashcardLearning {
         this.isAnswerShown = false;
         this.updateStats();
     }
-    
+
     showLearningInterface() {
         if (this.setupSection) this.setupSection.classList.add('hidden');
         if (this.learningSection) this.learningSection.classList.remove('hidden');
@@ -256,19 +237,76 @@ class FlashcardLearning {
         return array;
     }
 
+    async getWrongAnswers(correctCard) {
+        try {
+            const token = localStorage.getItem('swedishLearningToken');
+            const response = await fetch(`/api/learning/alternatives?wordId=${correctCard.id}&count=3`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch alternatives');
+            }
+
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to get alternatives');
+            }
+
+            let wrongAnswers = (Array.isArray(data.data) ? data.data : [])
+                .filter(answer => answer && answer.toLowerCase() !== correctCard.english.toLowerCase());
+
+            if (wrongAnswers.length < 3) {
+                const fallbackResponse = await fetch(`/api/learning/alternatives?wordId=${correctCard.id}&count=5&skipTypeMatch=true`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (fallbackResponse.ok) {
+                    const fallbackData = await fallbackResponse.json();
+                    if (fallbackData.success && Array.isArray(fallbackData.data)) {
+                        const fallbackAnswers = fallbackData.data.filter(answer => 
+                            answer && 
+                            answer.toLowerCase() !== correctCard.english.toLowerCase() &&
+                            !wrongAnswers.includes(answer)
+                        );
+                        
+                        while (wrongAnswers.length < 3 && fallbackAnswers.length > 0) {
+                            wrongAnswers.push(fallbackAnswers.pop());
+                        }
+                    }
+                }
+            }
+
+            return wrongAnswers.slice(0, 3) || [
+                'Need more words in database',
+                'Please add more words',
+                'Database needs more content'
+            ];
+
+        } catch (error) {
+            console.error('Error fetching alternatives:', error);
+            return [
+                'Error loading alternatives',
+                'Please try again',
+                'Database connection error'
+            ];
+        }
+    }
+
     async displayCurrentCard() {
-        console.log('Displaying card index:', this.currentCardIndex);
-        
         if (this.currentCardIndex >= this.currentCards.length) {
-            console.log('Reached end of cards, completing session');
             await this.completeSession();
             return;
         }
         
         const card = this.currentCards[this.currentCardIndex];
-        
         if (!card) {
-            console.log('No card found, completing session');
             await this.completeSession();
             return;
         }
@@ -281,31 +319,20 @@ class FlashcardLearning {
         this.difficultyBadge.textContent = `Level ${card.difficultyLevel}`;
         this.translation.textContent = card.english;
         
-        console.log('Displaying card:', {
-            index: this.currentCardIndex,
-            swedish: card.swedish,
-            english: card.english
-        });
-        
         try {
             const wrongAnswers = await this.getWrongAnswers(card);
-            console.log('Wrong answers received:', wrongAnswers);
-            
             const allAnswers = [card.english, ...wrongAnswers];
             const shuffledAnswers = this.shuffleArray([...allAnswers]);
-            console.log('Shuffled answers:', shuffledAnswers);
             
             this.correctAnswerIndex = shuffledAnswers.indexOf(card.english);
-            console.log('Correct answer index:', this.correctAnswerIndex);
             
             this.answerButtons.innerHTML = '';
-            
             shuffledAnswers.forEach((answer, index) => {
                 const button = document.createElement('button');
                 button.className = 'answer-button';
                 button.textContent = answer;
                 button.setAttribute('data-index', index.toString());
-                button.addEventListener('click', () => this.handleAnswer(index === this.correctAnswerIndex));
+                button.addEventListener('click', () => this.handleAnswer(index));
                 this.answerButtons.appendChild(button);
             });
             
@@ -334,94 +361,41 @@ class FlashcardLearning {
         this.updateProgress();
     }
 
-    async getWrongAnswers(correctCard) {
-        try {
-            console.log('Fetching alternatives for:', correctCard);
-            const token = localStorage.getItem('swedishLearningToken');
-            
-            const response = await fetch(`/api/learning/alternatives?wordId=${correctCard.id}&count=3`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch alternatives');
-            }
-
-            const data = await response.json();
-            console.log('Received alternatives:', data);
-
-            if (!data.success) {
-                throw new Error(data.error || 'Failed to get alternatives');
-            }
-
-            let wrongAnswers = data.data;
-            
-            wrongAnswers = (Array.isArray(wrongAnswers) ? wrongAnswers : [])
-                .filter(answer => answer && answer.toLowerCase() !== correctCard.english.toLowerCase());
-
-            if (wrongAnswers.length < 3) {
-                console.log('Not enough alternatives, trying fallback');
-                const fallbackResponse = await fetch(`/api/learning/alternatives?wordId=${correctCard.id}&count=5&skipTypeMatch=true`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (fallbackResponse.ok) {
-                    const fallbackData = await fallbackResponse.json();
-                    if (fallbackData.success && Array.isArray(fallbackData.data)) {
-                        const fallbackAnswers = fallbackData.data.filter(answer => 
-                            answer && 
-                            answer.toLowerCase() !== correctCard.english.toLowerCase() &&
-                            !wrongAnswers.includes(answer)
-                        );
-                        
-                        while (wrongAnswers.length < 3 && fallbackAnswers.length > 0) {
-                            wrongAnswers.push(fallbackAnswers.pop());
-                        }
-                    }
-                }
-            }
-
-            if (wrongAnswers.length === 0) {
-                return [
-                    'Need more words in database',
-                    'Please add more words',
-                    'Database needs more content'
-                ];
-            }
-
-            return wrongAnswers.slice(0, 3);
-
-        } catch (error) {
-            console.error('Error fetching alternatives:', error);
-            return [
-                'Error loading alternatives',
-                'Please try again',
-                'Database connection error'
-            ];
-        }
+    showAnswer() {
+        if (this.isAnswerShown) return;
+        
+        this.isAnswerShown = true;
+        if (this.cardBack) this.cardBack.classList.remove('hidden');
+        if (this.showAnswerBtn) this.showAnswerBtn.classList.add('hidden');
+        if (this.answerButtons) this.answerButtons.classList.remove('hidden');
     }
-    
-    async handleAnswer(isCorrect) {
+
+    async handleAnswer(selectedIndex) {
         if (this.isProcessingAnswer) {
-            console.log('Already processing an answer, ignoring click');
+            console.log('Already processing an answer, ignoring');
             return;
         }
         
-        this.isProcessingAnswer = true;
+        if (selectedIndex === undefined) {
+            console.log('Invalid answer attempt');
+            return;
+        }
         
         try {
+            this.isProcessingAnswer = true;
             const currentCard = this.currentCards[this.currentCardIndex];
+            const buttons = this.answerButtons.querySelectorAll('.answer-button');
+            const isCorrect = selectedIndex === this.correctAnswerIndex;
             
-            this.sessionStats.results.push({
-                word: currentCard,
-                isCorrect: isCorrect,
-                timestamp: new Date()
+            buttons.forEach(button => {
+                button.disabled = true;
+                const buttonIndex = parseInt(button.getAttribute('data-index'));
+                if (buttonIndex === this.correctAnswerIndex) {
+                    button.classList.add('correct');
+                }
+                if (buttonIndex === selectedIndex) {
+                    button.classList.add(isCorrect ? 'correct' : 'incorrect');
+                }
             });
             
             if (isCorrect) {
@@ -430,50 +404,39 @@ class FlashcardLearning {
                 this.sessionStats.incorrect++;
             }
             
-            // Update UI to show the correct answer
-            const buttons = this.answerButtons.querySelectorAll('.answer-button');
-            buttons.forEach((button, index) => {
-                button.disabled = true;
-                if (index === this.correctAnswerIndex) {
-                    button.classList.add('correct');
-                } else if (!isCorrect && index === parseInt(button.getAttribute('data-index'))) {
-                    button.classList.add('incorrect');
-                }
+            const selectedButton = buttons[selectedIndex];
+            this.sessionStats.results.push({
+                wordId: currentCard.id,
+                isCorrect: isCorrect,
+                userAnswer: selectedButton ? selectedButton.textContent : 'Unknown',
+                correctAnswer: currentCard.english,
+                word: currentCard,
+                timestamp: new Date()
             });
             
-            this.updateProgress();
-            this.updateStats();
-            
-            // Submit progress to the server
             const token = localStorage.getItem('swedishLearningToken');
-            if (token) {
-                try {
-                    const progressResponse = await fetch('/api/progress/practice-word', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            wordId: currentCard.id,
-                            isCorrect: isCorrect
-                        })
-                    });
-                    
-                    if (!progressResponse.ok) {
-                        console.error('Failed to update progress');
-                    }
-                } catch (error) {
-                    console.error('Error updating progress:', error);
-                }
+            const response = await fetch('/api/progress/practice-word', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    wordId: currentCard.id,
+                    isCorrect: isCorrect,
+                    timestamp: new Date().toISOString()
+                })
+            });
+            
+            if (!response.ok) {
+                console.error('Failed to save progress:', await response.text());
             }
             
-            // Move to next card after delay
-            const delay = isCorrect ? 1000 : 2000;
-            setTimeout(() => {
-                this.currentCardIndex++;
-                this.displayCurrentCard();
-            }, delay);
+            this.updateStats();
+            await new Promise(resolve => setTimeout(resolve, isCorrect ? 800 : 1500));
+            
+            this.currentCardIndex++;
+            await this.displayCurrentCard();
             
         } catch (error) {
             console.error('Error processing answer:', error);
@@ -481,7 +444,7 @@ class FlashcardLearning {
             this.isProcessingAnswer = false;
         }
     }
-    
+
     updateProgress() {
         if (!this.progressFill || !this.progressText) return;
         
@@ -499,7 +462,7 @@ class FlashcardLearning {
         const currentCardNum = this.currentCardIndex + 1;
         this.progressText.textContent = `${currentCardNum} / ${totalCards}`;
     }
-    
+
     updateStats() {
         if (!this.correctCount || !this.incorrectCount || !this.accuracy) return;
 
@@ -512,7 +475,7 @@ class FlashcardLearning {
         this.incorrectCount.textContent = incorrect.toString();
         this.accuracy.textContent = `${accuracy}%`;
     }
-    
+
     async completeSession() {
         this.showLoading(true);
         
@@ -553,7 +516,7 @@ class FlashcardLearning {
             this.showLoading(false);
         }
     }
-    
+
     showCompletionScreen(sessionData, timeSpent) {
         const total = this.sessionStats.correct + this.sessionStats.incorrect;
         const score = total > 0 ? Math.round((this.sessionStats.correct / total) * 100) : 0;
@@ -565,13 +528,13 @@ class FlashcardLearning {
         if (this.learningSection) this.learningSection.classList.add('hidden');
         if (this.completionSection) this.completionSection.classList.remove('hidden');
     }
-    
+
     formatTime(seconds) {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
-    
+
     resetSession() {
         this.currentCards = [];
         this.currentCardIndex = 0;
@@ -592,7 +555,7 @@ class FlashcardLearning {
         if (this.learningSection) this.learningSection.classList.add('hidden');
         if (this.completionSection) this.completionSection.classList.add('hidden');
     }
-    
+
     showSuccessModal() {
         const modal = document.getElementById('successModal');
         const closeBtn = document.getElementById('successModalCloseBtn');
@@ -622,7 +585,7 @@ class FlashcardLearning {
         this.showLearningInterface();
         this.displayCurrentCard();
     }
-    
+
     showLoading(show) {
         if (this.loadingOverlay) {
             if (show) {
@@ -632,20 +595,11 @@ class FlashcardLearning {
             }
         }
     }
-    
+
     logout() {
         console.log('Logging out...');
         localStorage.removeItem('swedishLearningToken');
         window.location.href = 'index.html';
-    }
-
-    showAnswer() {
-        if (this.isAnswerShown) return;
-        
-        this.isAnswerShown = true;
-        if (this.cardBack) this.cardBack.classList.remove('hidden');
-        if (this.showAnswerBtn) this.showAnswerBtn.classList.add('hidden');
-        if (this.answerButtons) this.answerButtons.classList.remove('hidden');
     }
 }
 

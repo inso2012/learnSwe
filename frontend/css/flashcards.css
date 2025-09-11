@@ -45,8 +45,14 @@
     border-color: #f56565;
 }
 
+.answer-button.selected {
+    border-color: #4299e1;
+    background-color: #ebf8ff;
+}
+
 .answer-button:disabled {
-    cursor: default;
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 /* Custom modal styles */
@@ -121,21 +127,4 @@
         transform: translateY(0);
         opacity: 1;
     }
-}
-}
-
-.answer-button.incorrect {
-    background-color: #f56565;
-    color: white;
-    border-color: #f56565;
-}
-
-.answer-button.selected {
-    border-color: #4299e1;
-    background-color: #ebf8ff;
-}
-
-.answer-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.7;
 }
