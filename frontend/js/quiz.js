@@ -1,4 +1,12 @@
 // Swedish Learning Quiz System
+document.addEventListener('DOMContentLoaded', () => {
+    // Check authentication before initializing the quiz
+    if (!checkAuth()) return; // This will redirect to index.html if not authenticated
+    
+    // Initialize quiz if authenticated
+    new SwedishQuiz();
+});
+
 class SwedishQuiz {
     constructor() {
         this.currentQuiz = null;
@@ -11,7 +19,14 @@ class SwedishQuiz {
         
         this.initializeElements();
         this.attachEventListeners();
-        this.checkAuth();
+        this.initializeUserInfo();
+    }
+    
+    initializeUserInfo() {
+        const userEmail = localStorage.getItem('userEmail');
+        if (userEmail) {
+            document.getElementById('userEmail').textContent = userEmail;
+        }
     }
     
     initializeElements() {

@@ -1,0 +1,167 @@
+/* Quiz page specific styles */
+.container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.setup-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.setup-card {
+    width: 100%;
+}
+
+.setup-card h2 {
+    color: #2d3748;
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+
+.setup-options {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.option-group label {
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.option-group select {
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: #2d3748;
+    background-color: white;
+    width: 100%;
+    max-width: 200px;
+}
+
+.quiz-section {
+    display: none;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-top: 2rem;
+}
+
+.quiz-section.active {
+    display: block;
+}
+
+.question-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.question-text {
+    font-size: 1.25rem;
+    color: #2d3748;
+    margin-bottom: 1.5rem;
+}
+
+.options-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.option-button {
+    padding: 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    background: white;
+    color: #2d3748;
+    font-size: 1rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.option-button:hover {
+    border-color: #4a5568;
+    background-color: #f7fafc;
+}
+
+.option-button.correct {
+    border-color: #48bb78;
+    background-color: #f0fff4;
+}
+
+.option-button.incorrect {
+    border-color: #f56565;
+    background-color: #fff5f5;
+}
+
+.quiz-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+}
+
+.quiz-progress {
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.btn-primary {
+    background-color: #4299e1;
+    color: white;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #3182ce;
+}
+
+.results-section {
+    display: none;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.results-section.active {
+    display: block;
+}
+
+.score {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2d3748;
+    margin: 1rem 0;
+}
+
+.score-details {
+    margin: 2rem 0;
+    display: grid;
+    gap: 1rem;
+    color: #4a5568;
+}

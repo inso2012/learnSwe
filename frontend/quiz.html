@@ -5,26 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Swedish Learning - Quiz</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/nav.css">
+    <link rel="stylesheet" href="css/quiz.css">
+    <script src="js/utility.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/quiz.js" defer></script>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1>🇸🇪 Swedish Quiz</h1>
-            <div class="user-info">
-                <span id="userWelcome">Welcome!</span>
-                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+    <nav>
+        <div class="nav-container">
+            <h1>Learn Swedish</h1>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="words.html">Words</a>
+                <a href="flashcards.html">Flashcards</a>
+                <a href="quiz.html" class="active">Quiz</a>
+                <a href="grammar.html">Grammar</a>
             </div>
-        </header>
-
-        <!-- Navigation -->
-        <nav class="nav">
-            <a href="index.html">Dashboard</a>
-            <a href="flashcards.html">Flashcards</a>
-            <a href="quiz.html" class="active">Quiz</a>
-            <a href="progress.html">Progress</a>
-        </nav>
-
+            <div class="user-info">
+                <span id="userEmail"></span>
+                <button id="logoutBtn">Log out</button>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
         <!-- Quiz Setup -->
         <section id="setupSection" class="setup-section">
             <div class="setup-card">

@@ -23,6 +23,13 @@ router.use(authenticateToken);
 router.get('/stats', getStats);
 
 /**
+ * @route   GET /api/progress/activity
+ * @desc    Get user's learning activity history
+ * @access  Private
+ */
+router.get('/activity', getLearningActivity);
+
+/**
  * @route   GET /api/progress/review-words
  * @desc    Get words due for review (spaced repetition)
  * @access  Private

@@ -1,6 +1,37 @@
+/**
+ * Swedish Flashcards Learning System
+ * Manages the flashcard learning experience including session management,
+ * card display, progress tracking, and statistics.
+ */
+
+// ============================================================================
+// Initialization
+// ============================================================================
+
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        // Verify authentication and user info
+        const isAuth = await checkAuth();
+        if (!isAuth) return;
+        
+        // Ensure we have user email
+        const storedEmail = localStorage.getItem('userEmail');
+        if (!storedEmail) {
+            await verifyToken();
+        }
+        
+        // Initialize application
+        const app = new FlashcardLearning();
+    } catch (error) {
+        console.error('Failed to initialize:', error);
+        window.location.href = 'index.html';
+    }
+});
+
 // Flashcard Learning System
 class FlashcardLearning {
     constructor() {
+        // Initialize properties
         this.currentCards = [];
         this.currentCardIndex = 0;
         this.sessionStats = {
@@ -13,617 +44,230 @@ class FlashcardLearning {
         this.correctAnswerIndex = null;
         this.isProcessingAnswer = false;
         
+        // Initialize the UI
         this.initializeElements();
         this.attachEventListeners();
+        this.updateUserInfo();
         
-        // Show setup section by default and hide others
+        // Setup initial view
         this.setupSection.classList.remove('hidden');
         this.learningSection.classList.add('hidden');
         this.completionSection.classList.add('hidden');
-        
-        // Call the async initialization method
-        this.init();
-    }
-    
-    async init() {
-        this.showLoading(true);
-        try {
-            const isAuthenticated = await this.checkAuth();
-            if (isAuthenticated) {
-                document.body.classList.remove('loading');
-                this.showLoading(false);
-            }
-        } catch (error) {
-            console.error('Initialization failed:', error);
-            this.logout();
-        }
-    }
-
-    async checkAuth() {
-        const token = localStorage.getItem('swedishLearningToken');
-        if (!token) {
-            window.location.href = 'index.html';
-            return false;
-        }
-
-        try {
-            const response = await fetch('/api/users/profile', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Profile fetch failed');
-            }
-
-            const data = await response.json();
-            if (this.userWelcome && data.data) {
-                this.userWelcome.textContent = `Welcome, ${data.data.email || 'User'}!`;
-            }
-            return true;
-
-        } catch (error) {
-            console.error('Auth check failed:', error);
-            return false;
-        }
     }
 
     initializeElements() {
-        // Initialize all UI elements
+        // Get all necessary DOM elements
         this.setupSection = document.getElementById('setupSection');
         this.learningSection = document.getElementById('learningSection');
         this.completionSection = document.getElementById('completionSection');
-        this.loadingOverlay = document.getElementById('loadingOverlay');
-        
-        this.cardCountSelect = document.getElementById('cardCount');
-        this.difficultySelect = document.getElementById('difficulty');
-        this.startLearningBtn = document.getElementById('startLearningBtn');
-        
-        this.flashcard = document.getElementById('flashcard');
+        this.cardCount = document.getElementById('cardCount');
+        this.startButton = document.getElementById('startButton');
         this.cardFront = document.getElementById('cardFront');
         this.cardBack = document.getElementById('cardBack');
-        this.wordType = document.getElementById('wordType');
-        this.wordText = document.getElementById('wordText');
-        this.difficultyBadge = document.getElementById('difficultyBadge');
-        this.translation = document.getElementById('translation');
-        this.masteryInfo = document.getElementById('masteryInfo');
-        
-        this.progressFill = document.getElementById('progressFill');
-        this.progressText = document.getElementById('progressText');
-        
-        this.showAnswerBtn = document.getElementById('showAnswerBtn');
-        this.answerButtons = document.getElementById('answerButtons');
-        
-        this.correctCount = document.getElementById('correctCount');
-        this.incorrectCount = document.getElementById('incorrectCount');
-        this.accuracy = document.getElementById('accuracy');
-        
-        this.finalScore = document.getElementById('finalScore');
-        this.finalCorrect = document.getElementById('finalCorrect');
-        this.finalTime = document.getElementById('finalTime');
-        this.newSessionBtn = document.getElementById('newSessionBtn');
-        this.reviewMistakesBtn = document.getElementById('reviewMistakesBtn');
-        
-        this.userWelcome = document.getElementById('userWelcome');
-        this.logoutBtn = document.getElementById('logoutBtn');
+        this.nextButton = document.getElementById('nextButton');
+        this.finishButton = document.getElementById('finishButton');
+        this.loadingOverlay = document.getElementById('loadingOverlay');
     }
 
-    attachEventListeners() {
-        if (this.startLearningBtn) {
-            this.startLearningBtn.addEventListener('click', () => this.startLearningSession());
+    updateUserInfo() {
+        const userEmail = localStorage.getItem('userEmail');
+        console.log('Stored email:', userEmail);
+        
+        const userEmailElement = document.getElementById('userEmail');
+        console.log('Email element:', userEmailElement);
+        
+        if (userEmail && userEmailElement) {
+            userEmailElement.textContent = userEmail;
+            console.log('Email set to:', userEmail);
+        } else {
+            console.log('Missing email or element');
         }
-
-        if (this.newSessionBtn) {
-            this.newSessionBtn.addEventListener('click', () => this.resetSession());
-        }
-
-        if (this.reviewMistakesBtn) {
-            this.reviewMistakesBtn.addEventListener('click', () => this.reviewMistakes());
-        }
-
-        if (this.logoutBtn) {
-            this.logoutBtn.addEventListener('click', () => this.logout());
-        }
-
-        if (this.showAnswerBtn) {
-            this.showAnswerBtn.addEventListener('click', () => this.showAnswer());
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (this.learningSection.classList.contains('hidden')) return;
-            
-            switch(e.key) {
-                case ' ':
-                case 'Enter':
-                    e.preventDefault();
-                    if (!this.isAnswerShown) {
-                        this.showAnswer();
-                    }
-                    break;
-                case '1':
-                case '2':
-                case '3':
-                case '4':
-                    e.preventDefault();
-                    if (this.isAnswerShown) {
-                        const index = parseInt(e.key) - 1;
-                        if (index >= 0 && index < 4) {
-                            this.handleAnswer(index);
-                        }
-                    }
-                    break;
-            }
+        
+        // Set up logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('swedishLearningToken');
+            localStorage.removeItem('userEmail');
+            window.location.href = 'index.html';
         });
     }
 
-    async startLearningSession() {
-        if (!this.cardCountSelect || !this.difficultySelect) {
-            console.error('Required elements not found');
-            alert('Error: Required elements not found. Please refresh the page.');
-            return;
+    attachEventListeners() {
+        // Setup user interactions
+        if (this.startButton) {
+            this.startButton.addEventListener('click', () => this.startLearningSession());
         }
-
-        this.showLoading(true);
+        if (this.nextButton) {
+            this.nextButton.addEventListener('click', () => this.nextCard());
+        }
+        if (this.finishButton) {
+            this.finishButton.addEventListener('click', () => this.completeSession());
+        }
         
-        try {
-            const limit = this.cardCountSelect.value;
-            const difficulty = this.difficultySelect.value;
-            const token = localStorage.getItem('swedishLearningToken');
-            
-            if (!token) {
-                window.location.href = 'index.html';
-                return;
-            }
-
-            const response = await fetch(`/api/learning/flashcards?limit=${limit}&difficulty=${difficulty}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+        // Card flip functionality
+        const flashcard = document.querySelector('.flashcard');
+        if (flashcard) {
+            flashcard.addEventListener('click', () => {
+                if (!this.isProcessingAnswer) {
+                    this.showAnswer();
                 }
             });
+        }
+    }
+
+    showLoading(show) {
+        if (this.loadingOverlay) {
+            show ? this.loadingOverlay.classList.remove('hidden') 
+                : this.loadingOverlay.classList.add('hidden');
+        }
+    }
+
+    async startLearningSession() {
+        this.showLoading(true);
+        try {
+            const count = parseInt(this.cardCount.value);
+            const response = await fetch(`/api/flashcards/random?count=${count}`);
             
             if (!response.ok) {
-                throw new Error(`Failed to fetch flashcards: ${response.status}`);
+                throw new Error('Failed to fetch cards');
             }
             
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || 'Failed to fetch flashcards');
-            }
-            
-            this.currentCards = data.data;
+            this.currentCards = await response.json();
             if (this.currentCards.length === 0) {
                 this.showNoCardsMessage();
                 return;
             }
-            
+
+            this.currentCardIndex = 0;
             this.resetSessionStats();
-            this.showLearningInterface();
             await this.displayCurrentCard();
             
+            this.setupSection.classList.add('hidden');
+            this.learningSection.classList.remove('hidden');
         } catch (error) {
-            console.error('Error starting learning session:', error);
-            alert('Failed to load flashcards. Please try again.');
+            console.error('Failed to start session:', error);
+            // TODO: Show error message to user
         } finally {
             this.showLoading(false);
         }
     }
 
     resetSessionStats() {
-        this.currentCardIndex = 0;
         this.sessionStats = {
             correct: 0,
             incorrect: 0,
-            startTime: new Date(),
+            startTime: Date.now(),
             results: []
         };
-        this.isAnswerShown = false;
-        this.updateStats();
-    }
-
-    showLearningInterface() {
-        if (this.setupSection) this.setupSection.classList.add('hidden');
-        if (this.learningSection) this.learningSection.classList.remove('hidden');
-        if (this.completionSection) this.completionSection.classList.add('hidden');
-    }
-
-    shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-        return array;
-    }
-
-    async getWrongAnswers(correctCard) {
-        try {
-            const token = localStorage.getItem('swedishLearningToken');
-            const response = await fetch(`/api/learning/alternatives?wordId=${correctCard.id}&count=3`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch alternatives');
-            }
-
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || 'Failed to get alternatives');
-            }
-
-            let wrongAnswers = (Array.isArray(data.data) ? data.data : [])
-                .filter(answer => answer && answer.toLowerCase() !== correctCard.english.toLowerCase());
-
-            if (wrongAnswers.length < 3) {
-                const fallbackResponse = await fetch(`/api/learning/alternatives?wordId=${correctCard.id}&count=5&skipTypeMatch=true`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (fallbackResponse.ok) {
-                    const fallbackData = await fallbackResponse.json();
-                    if (fallbackData.success && Array.isArray(fallbackData.data)) {
-                        const fallbackAnswers = fallbackData.data.filter(answer => 
-                            answer && 
-                            answer.toLowerCase() !== correctCard.english.toLowerCase() &&
-                            !wrongAnswers.includes(answer)
-                        );
-                        
-                        while (wrongAnswers.length < 3 && fallbackAnswers.length > 0) {
-                            wrongAnswers.push(fallbackAnswers.pop());
-                        }
-                    }
-                }
-            }
-
-            return wrongAnswers.slice(0, 3) || [
-                'Error loading alternatives',
-                'Please try again',
-                'Database connection error'
-            ];
-
-        } catch (error) {
-            console.error('Error fetching alternatives:', error);
-            return [
-                'Error loading alternatives',
-                'Please try again',
-                'Database connection error'
-            ];
-        }
-    }
-
-    showNoCardsMessage() {
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <h2>No Flashcards Available</h2>
-                <p>You don't have any flashcards to review right now.</p>
-                <p>To get started:</p>
-                <ul>
-                    <li>Go to the Words page</li>
-                    <li>Add new words to your vocabulary</li>
-                    <li>Return here to practice with flashcards</li>
-                </ul>
-                <button class="btn btn-primary" onclick="window.location.href='words.html'">Add Words</button>
-                <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
-            </div>
-        `;
-        document.body.appendChild(modal);
     }
 
     async displayCurrentCard() {
-        if (this.currentCardIndex >= this.currentCards.length) {
-            await this.completeSession();
-            return;
-        }
-        
         const card = this.currentCards[this.currentCardIndex];
-        if (!card) {
-            await this.completeSession();
-            return;
+        if (!card) return;
+
+        if (this.cardFront) {
+            this.cardFront.textContent = card.swedish;
+        }
+        if (this.cardBack) {
+            this.cardBack.textContent = card.english;
         }
         
-        this.isProcessingAnswer = false;
         this.isAnswerShown = false;
         
-        this.wordType.textContent = card.type || '';
-        this.wordText.textContent = card.swedish;
-        this.difficultyBadge.textContent = `Level ${card.difficultyLevel}`;
-        this.translation.textContent = card.english;
-        
-        try {
-            const wrongAnswers = await this.getWrongAnswers(card);
-            const allAnswers = [card.english, ...wrongAnswers];
-            const shuffledAnswers = this.shuffleArray([...allAnswers]);
-            
-            this.correctAnswerIndex = shuffledAnswers.indexOf(card.english);
-            
-            this.answerButtons.innerHTML = '';
-            shuffledAnswers.forEach((answer, index) => {
-                const button = document.createElement('button');
-                button.className = 'answer-button';
-                button.textContent = answer;
-                button.setAttribute('data-index', index.toString());
-                button.addEventListener('click', () => this.handleAnswer(index));
-                this.answerButtons.appendChild(button);
-            });
-            
-            this.answerButtons.classList.remove('hidden');
-            
-        } catch (error) {
-            console.error('Error preparing multiple choice answers:', error);
+        const flashcard = document.querySelector('.flashcard');
+        if (flashcard) {
+            flashcard.classList.remove('flipped');
         }
-        
-        if (card.progress && card.progress.masteryLevel !== 'new') {
-            this.masteryInfo.innerHTML = `
-                <span class="mastery-level mastery-${card.progress.masteryLevel}">${card.progress.masteryLevel}</span>
-                <span class="success-rate">Success: ${card.progress.successRate}%</span>
-            `;
-        } else {
-            this.masteryInfo.innerHTML = `
-                <span class="mastery-level mastery-new">New Word</span>
-                <span class="success-rate">First time learning</span>
-            `;
-        }
-        
-        this.cardFront.classList.remove('hidden');
-        this.cardBack.classList.add('hidden');
-        this.showAnswerBtn.classList.add('hidden');
         
         this.updateProgress();
     }
 
     showAnswer() {
-        if (this.isAnswerShown) return;
-        
+        const flashcard = document.querySelector('.flashcard');
+        if (flashcard) {
+            flashcard.classList.add('flipped');
+        }
         this.isAnswerShown = true;
-        if (this.cardBack) this.cardBack.classList.remove('hidden');
-        if (this.showAnswerBtn) this.showAnswerBtn.classList.add('hidden');
-        if (this.answerButtons) this.answerButtons.classList.remove('hidden');
     }
 
-    async handleAnswer(selectedIndex) {
-        if (this.isProcessingAnswer) {
-            console.log('Already processing an answer, ignoring');
-            return;
-        }
-        
-        if (selectedIndex === undefined) {
-            console.log('Invalid answer attempt');
-            return;
-        }
-        
-        try {
-            this.isProcessingAnswer = true;
-            const currentCard = this.currentCards[this.currentCardIndex];
-            const buttons = this.answerButtons.querySelectorAll('.answer-button');
-            const isCorrect = selectedIndex === this.correctAnswerIndex;
-            
-            buttons.forEach(button => {
-                button.disabled = true;
-                const buttonIndex = parseInt(button.getAttribute('data-index'));
-                if (buttonIndex === this.correctAnswerIndex) {
-                    button.classList.add('correct');
-                }
-                if (buttonIndex === selectedIndex) {
-                    button.classList.add(isCorrect ? 'correct' : 'incorrect');
-                }
-            });
-            
-            if (isCorrect) {
-                this.sessionStats.correct++;
-            } else {
-                this.sessionStats.incorrect++;
-            }
-            
-            const selectedButton = buttons[selectedIndex];
-            this.sessionStats.results.push({
-                wordId: currentCard.id,
-                isCorrect: isCorrect,
-                userAnswer: selectedButton ? selectedButton.textContent : 'Unknown',
-                correctAnswer: currentCard.english,
-                word: currentCard,
-                timestamp: new Date()
-            });
-            
-            const token = localStorage.getItem('swedishLearningToken');
-            const response = await fetch('/api/progress/practice-word', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    wordId: currentCard.id,
-                    isCorrect: isCorrect,
-                    timestamp: new Date().toISOString()
-                })
-            });
-            
-            if (!response.ok) {
-                console.error('Failed to save progress:', await response.text());
-            }
-            
-            this.updateStats();
-            await new Promise(resolve => setTimeout(resolve, isCorrect ? 800 : 1500));
-            
+    nextCard() {
+        if (this.currentCardIndex < this.currentCards.length - 1) {
             this.currentCardIndex++;
-            await this.displayCurrentCard();
-            
-        } catch (error) {
-            console.error('Error processing answer:', error);
-        } finally {
-            this.isProcessingAnswer = false;
+            this.displayCurrentCard();
+        } else {
+            this.completeSession();
         }
     }
 
     updateProgress() {
-        if (!this.progressFill || !this.progressText) return;
-        
-        if (this.currentCards.length === 0) {
-            this.progressFill.style.width = '0%';
-            this.progressText.textContent = '0 / 0';
-            return;
+        const progress = ((this.currentCardIndex + 1) / this.currentCards.length) * 100;
+        const progressBar = document.querySelector('.progress-bar');
+        if (progressBar) {
+            progressBar.style.width = `${progress}%`;
         }
-
-        const cardsAnswered = this.currentCardIndex;
-        const totalCards = this.currentCards.length;
-        const progress = (cardsAnswered / totalCards) * 100;
         
-        this.progressFill.style.width = `${progress}%`;
-        const currentCardNum = this.currentCardIndex + 1;
-        this.progressText.textContent = `${currentCardNum} / ${totalCards}`;
+        const progressText = document.getElementById('progressText');
+        if (progressText) {
+            progressText.textContent = `Card ${this.currentCardIndex + 1} of ${this.currentCards.length}`;
+        }
     }
 
-    updateStats() {
-        if (!this.correctCount || !this.incorrectCount || !this.accuracy) return;
-
-        const correct = this.sessionStats.correct || 0;
-        const incorrect = this.sessionStats.incorrect || 0;
-        const total = correct + incorrect;
-        const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
-        
-        this.correctCount.textContent = correct.toString();
-        this.incorrectCount.textContent = incorrect.toString();
-        this.accuracy.textContent = `${accuracy}%`;
+    showNoCardsMessage() {
+        // TODO: Implement showing a message when no cards are available
+        console.log('No cards available');
     }
 
     async completeSession() {
         this.showLoading(true);
-        
         try {
-            const endTime = new Date();
-            const timeSpent = Math.round((endTime - this.sessionStats.startTime) / 1000);
-            const token = localStorage.getItem('swedishLearningToken');
-            
-            if (token) {
-                const response = await fetch('/api/learning/session/submit', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        sessionType: 'flashcards',
-                        results: this.sessionStats.results,
-                        timeSpent: timeSpent
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to submit session results');
-                }
-                
-                const data = await response.json();
-                this.showCompletionScreen(data.data, timeSpent);
-            } else {
-                throw new Error('No authentication token found');
+            // Send session results to server
+            const response = await fetch('/api/progress/flashcards', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('swedishLearningToken')}`
+                },
+                body: JSON.stringify({
+                    sessionStats: this.sessionStats,
+                    cards: this.currentCards
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save session results');
             }
+
+            // Show completion view
+            this.setupSection.classList.add('hidden');
+            this.learningSection.classList.add('hidden');
+            this.completionSection.classList.remove('hidden');
             
+            this.displaySessionStats();
         } catch (error) {
-            console.error('Error completing session:', error);
-            const timeSpent = Math.round((new Date() - this.sessionStats.startTime) / 1000);
-            this.showCompletionScreen(null, timeSpent);
+            console.error('Failed to complete session:', error);
+            // TODO: Show error message to user
         } finally {
             this.showLoading(false);
         }
     }
 
-    showCompletionScreen(sessionData, timeSpent) {
-        const total = this.sessionStats.correct + this.sessionStats.incorrect;
-        const score = total > 0 ? Math.round((this.sessionStats.correct / total) * 100) : 0;
-        
-        if (this.finalScore) this.finalScore.textContent = `${score}%`;
-        if (this.finalCorrect) this.finalCorrect.textContent = `${this.sessionStats.correct}/${total}`;
-        if (this.finalTime) this.finalTime.textContent = this.formatTime(timeSpent);
-        
-        if (this.learningSection) this.learningSection.classList.add('hidden');
-        if (this.completionSection) this.completionSection.classList.remove('hidden');
-    }
+    displaySessionStats() {
+        const timeSpent = Math.floor((Date.now() - this.sessionStats.startTime) / 1000);
+        const accuracy = (this.sessionStats.correct / this.currentCards.length) * 100;
 
-    formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-
-    resetSession() {
-        this.currentCards = [];
-        this.currentCardIndex = 0;
-        this.sessionStats = {
-            correct: 0,
-            incorrect: 0,
-            startTime: null,
-            results: []
+        const elements = {
+            cards: document.getElementById('statsCards'),
+            time: document.getElementById('statsTime'),
+            accuracy: document.getElementById('statsAccuracy')
         };
-        this.isAnswerShown = false;
-        this.correctAnswerIndex = null;
-        this.isProcessingAnswer = false;
-        
-        this.updateProgress();
-        this.updateStats();
-        
-        if (this.setupSection) this.setupSection.classList.remove('hidden');
-        if (this.learningSection) this.learningSection.classList.add('hidden');
-        if (this.completionSection) this.completionSection.classList.add('hidden');
-    }
 
-    showSuccessModal() {
-        const modal = document.getElementById('successModal');
-        const closeBtn = document.getElementById('successModalCloseBtn');
-        
-        if (modal) {
-            modal.classList.add('show');
-            
-            const handleClose = () => {
-                modal.classList.remove('show');
-                closeBtn.removeEventListener('click', handleClose);
-            };
-            
-            closeBtn.addEventListener('click', handleClose);
+        if (elements.cards) {
+            elements.cards.textContent = this.currentCards.length;
         }
-    }
-
-    reviewMistakes() {
-        const mistakes = this.sessionStats.results.filter(result => !result.isCorrect);
-        
-        if (mistakes.length === 0) {
-            this.showSuccessModal();
-            return;
+        if (elements.time) {
+            elements.time.textContent = `${timeSpent} seconds`;
         }
-        
-        this.currentCards = mistakes.map(mistake => mistake.word);
-        this.resetSessionStats();
-        this.showLearningInterface();
-        this.displayCurrentCard();
-    }
-
-    showLoading(show) {
-        if (this.loadingOverlay) {
-            if (show) {
-                this.loadingOverlay.classList.remove('hidden');
-            } else {
-                this.loadingOverlay.classList.add('hidden');
-            }
+        if (elements.accuracy) {
+            elements.accuracy.textContent = `${accuracy.toFixed(1)}%`;
         }
-    }
-
-    logout() {
-        console.log('Logging out...');
-        localStorage.removeItem('swedishLearningToken');
-        window.location.href = 'index.html';
     }
 }
-
-// Initialize the flashcard system when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    new FlashcardLearning();
-});

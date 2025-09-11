@@ -7,7 +7,7 @@ const {
     getWordsForReview
 } = require('../models/Progress');
 
-const { UserWordProgress, Word, LearningStreak } = require('../db');
+const { UserWordProgress, Word, LearningStreak, sequelize } = require('../db');
 const { Op } = require('sequelize');
 
 /**
@@ -18,9 +18,47 @@ async function getStats(req, res) {
         const userId = req.userId;
         const stats = await getUserStats(userId);
         
+        // Get word type statistics
+        const wordTypeStats = await UserWordProgress.findAll({
+            attributes: [
+                [sequelize.col('word.type'), 'type'],
+                [sequelize.fn('COUNT', sequelize.col('UserWordProgress.id')), 'count']
+            ],
+            include: [{
+                model: Word,
+                as: 'word',
+                attributes: []
+            }],
+            where: { 
+                userId,
+                masteryLevel: { [Op.in]: ['practicing', 'mastered'] }
+            },
+            group: ['word.type'],
+            raw: true
+        });
+
+        // Format the response with default values for empty states
+        const formattedStats = {
+            ...stats,
+            totalWordsLearned: stats.totalWordsLearned || 0,
+            currentStreak: stats.currentStreak || 0,
+            longestStreak: stats.longestStreak || 0,
+            totalQuizzesTaken: stats.totalQuizzesTaken || 0,
+            averageQuizScore: stats.averageQuizScore || 0,
+            wordTypeStats: wordTypeStats.reduce((acc, curr) => {
+                acc[curr.type.toLowerCase()] = parseInt(curr.count || 0);
+                return acc;
+            }, {
+                nouns: 0,
+                verbs: 0,
+                adjectives: 0,
+                other: 0
+            })
+        };
+
         res.status(200).json({
             success: true,
-            data: stats
+            data: formattedStats
         });
         
     } catch (error) {

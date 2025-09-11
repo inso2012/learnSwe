@@ -5,26 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Swedish Learning - Flashcards</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/flashcards.css">
+    <script src="js/utility.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/flashcards.js" defer></script>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1>Swedish Flashcards</h1>
-            <div class="user-info">
-                <span id="userWelcome">Welcome!</span>
-                <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+    <nav>
+        <div class="nav-container">
+            <h1>Learn Swedish</h1>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="words.html">Words</a>
+                <a href="flashcards.html" class="active">Flashcards</a>
+                <a href="quiz.html">Quiz</a>
+                <a href="grammar.html">Grammar</a>
             </div>
+            <div class="user-info">
+                <span id="userEmail"></span>
+                <button id="logoutBtn" class="btn btn-secondary">Log out</button>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <header class="header">
+            <h1>Flashcards</h1>
         </header>
-
-        <!-- Navigation -->
-        <nav class="nav">
-            <a href="index.html">Dashboard</a>
-            <a href="flashcards.html" class="active">Flashcards</a>
-            <a href="quiz.html">Quiz</a>
-            <a href="progress.html">Progress</a>
-        </nav>
 
         <!-- Learning Session Setup -->
         <section id="setupSection" class="setup-section">
@@ -150,7 +157,5 @@
             </div>
         </div>
     </div>
-
-    <script src="js/flashcards.js"></script>
 </body>
 </html>

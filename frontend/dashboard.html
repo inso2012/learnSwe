@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Swedish - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/nav.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script src="js/utility.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/dashboard.js" defer></script>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <h1>Learn Swedish</h1>
+            <div class="nav-links">
+                <a href="dashboard.html" class="active">Dashboard</a>
+                <a href="words.html">Words</a>
+                <a href="flashcards.html">Flashcards</a>
+                <a href="quiz.html">Quiz</a>
+                <a href="grammar.html">Grammar</a>
+            </div>
+            <div class="user-info">
+                <span id="username"></span>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <div class="dashboard-container">
+            <div class="user-profile">
+                <h2>Welcome, <span id="userDisplayName"></span>!</h2>
+                <p>Member since: <span id="memberSince"></span></p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Words Learned</h3>
+                    <div class="stat-value" id="wordsLearned">0</div>
+                    <div class="progress-bar">
+                        <div class="progress" id="wordsProgress"></div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Current Streak</h3>
+                    <div class="stat-value" id="currentStreak">0 days</div>
+                    <div class="streak-flame">🔥</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Longest Streak</h3>
+                    <div class="stat-value" id="longestStreak">0 days</div>
+                    <div class="streak-trophy">🏆</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Quizzes Taken</h3>
+                    <div class="stat-value" id="quizzesTaken">0</div>
+                    <div class="quiz-icon">📝</div>
+                </div>
+            </div>
+
+            <div class="detailed-stats">
+                <div class="progress-section">
+                    <h3>Word Types Progress</h3>
+                    <div class="word-types-progress">
+                        <div class="word-type">
+                            <span>Nouns</span>
+                            <div class="progress-bar">
+                                <div class="progress" id="nounsProgress"></div>
+                            </div>
+                            <span id="nounsCount">0/0</span>
+                        </div>
+                        <div class="word-type">
+                            <span>Verbs</span>
+                            <div class="progress-bar">
+                                <div class="progress" id="verbsProgress"></div>
+                            </div>
+                            <span id="verbsCount">0/0</span>
+                        </div>
+                        <div class="word-type">
+                            <span>Adjectives</span>
+                            <div class="progress-bar">
+                                <div class="progress" id="adjectivesProgress"></div>
+                            </div>
+                            <span id="adjectivesCount">0/0</span>
+                        </div>
+                        <div class="word-type">
+                            <span>Other</span>
+                            <div class="progress-bar">
+                                <div class="progress" id="otherProgress"></div>
+                            </div>
+                            <span id="otherCount">0/0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-activity">
+                    <h3>Recent Activity</h3>
+                    <div id="activityList">
+                        <!-- Activity items will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

@@ -280,27 +280,35 @@ async function updateUserStreak(userId, transaction) {
  * @returns {Promise<Object>}
  */
 async function getUserStats(userId) {
-    const user = await User.findByPk(userId, {
-        attributes: [
-            'totalWordsLearned', 
-            'currentStreak', 
-            'longestStreak', 
-            'totalQuizzesTaken', 
-            'averageQuizScore'
-        ]
-    });
-    
-    // Get mastery breakdown
-    const masteryStats = await UserWordProgress.findAll({
-        where: { userId },
-        attributes: [
-            'masteryLevel',
-            [sequelize.fn('COUNT', sequelize.col('id')), 'count']
-        ],
-        group: ['masteryLevel'],
-        raw: true
-    });
-    
+    const [user, masteryStats] = await Promise.all([
+        User.findByPk(userId, {
+            attributes: [
+                'totalWordsLearned', 
+                'currentStreak', 
+                'longestStreak', 
+                'totalQuizzesTaken', 
+                'averageQuizScore'
+            ],
+            raw: true
+        }),
+        UserWordProgress.findAll({
+            where: { 
+                userId,
+                masteryLevel: { [Op.in]: ['practicing', 'mastered'] }
+            },
+            attributes: [
+                'masteryLevel',
+                [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+            ],
+            group: ['masteryLevel'],
+            raw: true
+        })
+    ]);
+
+    if (!user) {
+        throw new Error('User not found');
+    }
+
     // Get recent quiz performance (last 7 days)
     const recentQuizzes = await QuizSession.findAll({
         where: {
@@ -310,7 +318,8 @@ async function getUserStats(userId) {
             }
         },
         order: [['completedAt', 'DESC']],
-        limit: 10
+        limit: 10,
+        raw: true
     });
     
     // Get learning activity (last 30 days)
@@ -321,12 +330,22 @@ async function getUserStats(userId) {
                 [Op.gte]: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
             }
         },
-        order: [['date', 'DESC']]
+        order: [['date', 'DESC']],
+        raw: true
     });
     
+    // Format user stats with defaults
     return {
-        user,
-        masteryStats,
+        ...user,
+        totalWordsLearned: user.totalWordsLearned || 0,
+        currentStreak: user.currentStreak || 0,
+        longestStreak: user.longestStreak || 0,
+        totalQuizzesTaken: user.totalQuizzesTaken || 0,
+        averageQuizScore: user.averageQuizScore || 0,
+        masteryStats: masteryStats.reduce((acc, { masteryLevel, count }) => {
+            acc[masteryLevel.toLowerCase()] = parseInt(count);
+            return acc;
+        }, {}),
         recentQuizzes,
         learningActivity
     };
