@@ -8,6 +8,40 @@ nav {
     z-index: 100;
     backdrop-filter: blur(10px);
     width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* User info styles in navigation */
+.nav-container .user-info {
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nav-container .user-info .user-email {
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.nav-container .user-info #logoutBtn {
+    background: #e53e3e;
+    color: white;
+    border: 2px solid #e53e3e;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-container .user-info #logoutBtn:hover {
+    background: #c53030;
+    border-color: #c53030;
+    color: white;
 }
 
 .nav-container {
@@ -17,12 +51,15 @@ nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    white-space: nowrap;
+    min-width: min-content;
 }
 
 .nav-container h1 {
     font-size: 1.5rem;
     color: #4a5568;
     margin: 0;
+    flex-shrink: 0;
 }
 
 .nav-links {
@@ -30,6 +67,7 @@ nav {
     gap: 2rem;
     align-items: center;
     margin: 0 2rem;
+    flex-shrink: 0;
 }
 
 .nav-links a {
@@ -39,6 +77,17 @@ nav {
     padding: 0.5rem 1rem;
     border-radius: 4px;
     transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.user-email {
+    color: #4a5568;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    margin-left: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-weight: 500;
 }
 
 .nav-links a:hover {

@@ -1,4 +1,15 @@
 /* Swedish Learning App Styles */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Critical styles for preventing flash */
+html {
+    background: #667eea;  /* Fallback color */
+    background: var(--primary-gradient);
+    min-height: 100%;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -7,9 +18,20 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: transparent;
     min-height: 100vh;
     color: #333;
+    opacity: 0;
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .container {
@@ -118,7 +140,7 @@ nav {
 .user-info button:hover {
     background-color: #c53030;
 }
-}
+
 
 .nav a {
     background: rgba(255, 255, 255, 0.2);

@@ -1,4 +1,17 @@
 /* Flashcard specific styles */
+.container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.setup-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 200px);
+}
+
 .answer-buttons {
     display: grid;
     grid-template-columns: 1fr 1fr;

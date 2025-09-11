@@ -6,50 +6,70 @@
 }
 
 .setup-section {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 2rem;
-    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 200px);
 }
 
 .setup-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 2.5rem;
     width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .setup-card h2 {
     color: #2d3748;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
+    margin-bottom: 2rem;
+    font-size: 1.75rem;
+    text-align: center;
+    font-weight: 600;
 }
 
 .setup-options {
     display: grid;
-    gap: 1.5rem;
+    gap: 2rem;
 }
 
 .option-group {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
 }
 
 .option-group label {
     color: #4a5568;
     font-weight: 500;
+    font-size: 1.1rem;
 }
 
 .option-group select {
-    padding: 0.5rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
     font-size: 1rem;
     color: #2d3748;
     background-color: white;
     width: 100%;
-    max-width: 200px;
+    transition: all 0.2s;
+    cursor: pointer;
 }
 
+.option-group select:hover {
+    border-color: #4299e1;
+}
+
+.option-group select:focus {
+    outline: none;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
+}
+
+/* Button styling is now handled by shared style.css */
 .quiz-section {
     display: none;
     padding: 2rem;

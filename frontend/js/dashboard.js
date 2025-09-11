@@ -1,17 +1,20 @@
 // DOM elements and cache
-const elements = window.dashboardElements || {
-    userDisplayName: null,
-    memberSince: null,
-    wordsLearned: null,
-    wordsProgress: null,
-    currentStreak: null,
-    longestStreak: null,
-    quizzesTaken: null,
-    activityList: null,
-    progressBars: {},
-    countDisplays: {}
-};
-window.dashboardElements = elements;
+let elements = window.dashboardElements;
+if (!elements) {
+    elements = {
+        userDisplayName: null,
+        memberSince: null,
+        wordsLearned: null,
+        wordsProgress: null,
+        currentStreak: null,
+        longestStreak: null,
+        quizzesTaken: null,
+        activityList: null,
+        progressBars: {},
+        countDisplays: {}
+    };
+    window.dashboardElements = elements;
+}
 
 // Initialize DOM elements
 function initializeElements() {
