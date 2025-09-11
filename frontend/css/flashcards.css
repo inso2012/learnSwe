@@ -128,3 +128,78 @@
         opacity: 1;
     }
 }
+
+/* No Cards Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    width: 90%;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+.modal-content h2 {
+    color: #2d3748;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.modal-content p {
+    color: #4a5568;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.modal-content ul {
+    color: #4a5568;
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+}
+
+.modal-content ul li {
+    margin-bottom: 0.5rem;
+}
+
+.modal-content .btn {
+    margin: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.modal-content .btn-primary {
+    background-color: #4299e1;
+    color: white;
+    border: none;
+}
+
+.modal-content .btn-primary:hover {
+    background-color: #3182ce;
+}
+
+.modal-content .btn-secondary {
+    background-color: #e2e8f0;
+    color: #2d3748;
+    border: none;
+}
+
+.modal-content .btn-secondary:hover {
+    background-color: #cbd5e0;
+}

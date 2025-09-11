@@ -195,7 +195,7 @@ class FlashcardLearning {
             
             this.currentCards = data.data;
             if (this.currentCards.length === 0) {
-                alert('No flashcards available. Please add some words first!');
+                this.showNoCardsMessage();
                 return;
             }
             
@@ -284,9 +284,9 @@ class FlashcardLearning {
             }
 
             return wrongAnswers.slice(0, 3) || [
-                'Need more words in database',
-                'Please add more words',
-                'Database needs more content'
+                'Error loading alternatives',
+                'Please try again',
+                'Database connection error'
             ];
 
         } catch (error) {
@@ -297,6 +297,26 @@ class FlashcardLearning {
                 'Database connection error'
             ];
         }
+    }
+
+    showNoCardsMessage() {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h2>No Flashcards Available</h2>
+                <p>You don't have any flashcards to review right now.</p>
+                <p>To get started:</p>
+                <ul>
+                    <li>Go to the Words page</li>
+                    <li>Add new words to your vocabulary</li>
+                    <li>Return here to practice with flashcards</li>
+                </ul>
+                <button class="btn btn-primary" onclick="window.location.href='words.html'">Add Words</button>
+                <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
     }
 
     async displayCurrentCard() {
