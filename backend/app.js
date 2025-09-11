@@ -5,6 +5,7 @@ const wordApi = require('./routes/wordApi');
 const userApi = require('./routes/userApi');
 const progressApi = require('./routes/progressApi');
 const learningApi = require('./routes/learningApi');
+const alternativesApi = require('./routes/alternativesApi');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,6 +18,7 @@ app.use('/api/words', wordApi);
 app.use('/api/users', userApi);
 app.use('/api/progress', progressApi);
 app.use('/api/learning', learningApi);
+app.use('/api/learning', alternativesApi);
 //server frontend from backend
 app.use(express.static(path.join(__dirname, '../frontend')));
 

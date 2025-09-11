@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Swedish Learning - Flashcards</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/flashcards.css">
 </head>
 <body>
     <div class="container">
@@ -81,10 +82,12 @@
                 </div>
 
                 <div class="card-actions">
-                    <button id="showAnswerBtn" class="btn btn-secondary">Show Answer</button>
+                    <button id="showAnswerBtn" class="btn btn-primary">Show Answer</button>
                     <div class="answer-buttons hidden" id="answerButtons">
-                        <button id="incorrectBtn" class="btn btn-incorrect">❌ Incorrect</button>
-                        <button id="correctBtn" class="btn btn-correct">✅ Correct</button>
+                        <button class="answer-button" data-index="0">Loading...</button>
+                        <button class="answer-button" data-index="1">Loading...</button>
+                        <button class="answer-button" data-index="2">Loading...</button>
+                        <button class="answer-button" data-index="3">Loading...</button>
                     </div>
                 </div>
             </div>
@@ -135,6 +138,16 @@
         <div id="loadingOverlay" class="loading-overlay hidden">
             <div class="loading-spinner"></div>
             <p>Loading flashcards...</p>
+        </div>
+
+        <!-- Success Modal -->
+        <div id="successModal" class="custom-modal-overlay">
+            <div class="custom-modal">
+                <span class="modal-emoji">🌟</span>
+                <h2>Great job!</h2>
+                <p>You didn't make any mistakes in this session!</p>
+                <button class="custom-modal-button" id="successModalCloseBtn">Continue</button>
+            </div>
         </div>
     </div>
 

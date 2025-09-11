@@ -158,7 +158,7 @@
                                 showModal('Success', 'Login successful!');
                                 setTimeout(() => {
                                     window.location.href = 'flashcards.html';
-                                }, 1500);
+                                }, 1000);
                             } else {
                                 showModal('Error', 'Failed to store authentication token');
                             }
@@ -172,7 +172,7 @@
                                 submitButton.textContent = 'Login';
                                 toggleLink.innerHTML = "Don't have an account? <span class='underline'>Sign Up</span>";
                                 form.reset();
-                            }, 1500);
+                            }, 1000);
                         }
                     } else {
                         console.error(`${endpoint} failed:`, data.error);
