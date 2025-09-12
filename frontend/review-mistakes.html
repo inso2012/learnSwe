@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Swedish - Review Mistakes</title>
+    <style>
+        html {
+            background: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100%;
+        }
+        body {
+            opacity: 0;
+        }
+    </style>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/nav.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script src="js/utility.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/nav.js" defer></script>
+    <script src="js/modal.js" defer></script>
+    <script src="js/review-mistakes.js" defer></script>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <h1>Learn Swedish</h1>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="words.html">Words</a>
+                <a href="flashcards.html">Practice</a>
+                <a href="quiz.html">Quiz</a>
+                <a href="grammar.html">Grammar</a>
+            </div>
+            <div class="user-info">
+                <span id="username" class="user-email"></span>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <div class="dashboard-container">
+            <div class="review-header">
+                <button class="back-btn" onclick="goBackToDashboard()">
+                    ← Back to Dashboard
+                </button>
+                <h2>Review Your Mistakes</h2>
+                <p>Words you've gotten wrong during practice sessions</p>
+            </div>
+
+            <div class="mistakes-container">
+                <div class="mistakes-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Mistakes:</span>
+                        <span class="stat-value" id="totalMistakes">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Words to Review:</span>
+                        <span class="stat-value" id="wordsToReview">0</span>
+                    </div>
+                </div>
+
+                <div class="mistakes-actions">
+                    <div class="select-all-container">
+                        <label class="select-all-label">
+                            <input type="checkbox" id="selectAllCheckbox" class="select-all-checkbox" onchange="toggleSelectAll()">
+                            <span class="checkmark"></span>
+                            Select All Words
+                        </label>
+                    </div>
+                    <button class="action-btn clear-btn" onclick="clearAllMistakes()">
+                        🗑️ Clear All Mistakes
+                    </button>
+                    <button class="action-btn practice-btn" onclick="practiceSelectedMistakes()">
+                        📚 Practice Selected Words
+                    </button>
+                </div>
+
+                <div class="mistakes-list" id="mistakesList">
+                    <div class="loading-message">
+                        Loading your mistakes...
+                    </div>
+                </div>
+
+                <div class="no-mistakes-message hidden" id="noMistakesMessage">
+                    <div class="success-icon">🎉</div>
+                    <h3>No mistakes found!</h3>
+                    <p>You haven't made any mistakes yet, or you've cleared them all. Great job!</p>
+                    <button class="action-btn" onclick="goBackToDashboard()">
+                        Back to Dashboard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+</body>
+</html>

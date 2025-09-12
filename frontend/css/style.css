@@ -1114,3 +1114,103 @@ nav {
         padding: 20px;
     }
 }
+
+/* Universal Modal System - Used across all pages */
+.universal-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.universal-modal-overlay.hidden {
+    display: none;
+}
+
+.universal-modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: universalModalSlideIn 0.3s ease-out;
+}
+
+@keyframes universalModalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.universal-modal-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.universal-modal-content h3 {
+    margin: 0 0 1rem 0;
+    color: #2c3e50;
+    font-size: 1.5rem;
+}
+
+.universal-modal-content p {
+    margin: 0 0 2rem 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+.universal-modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.universal-modal-btn {
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 100px;
+}
+
+.universal-modal-btn.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.universal-modal-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.universal-modal-btn.secondary {
+    background: #f8f9fa;
+    color: #666;
+    border: 1px solid #dee2e6;
+}
+
+.universal-modal-btn.secondary:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.universal-modal-btn.hidden {
+    display: none;
+}

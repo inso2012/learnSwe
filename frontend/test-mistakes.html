@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Mistakes</title>
+</head>
+<body>
+    <h1>Test Mistakes Storage</h1>
+    <button onclick="addTestMistake()">Add Test Mistake</button>
+    <button onclick="checkMistakes()">Check Mistakes</button>
+    <button onclick="clearMistakes()">Clear All Mistakes</button>
+    <button onclick="testLocalStorage()">Test LocalStorage Basic</button>
+    <div id="output"></div>
+
+    <script>
+        function addTestMistake() {
+            console.log('Adding test mistake...');
+            
+            const testMistake = JSON.stringify({
+                swedish: "hund",
+                english: "dog", 
+                type: "noun",
+                difficulty: "easy"
+            });
+            
+            console.log('Test mistake object:', testMistake);
+            
+            const existing = localStorage.getItem('swedishLearningMistakes');
+            console.log('Existing localStorage:', existing);
+            
+            const mistakes = existing ? JSON.parse(existing) : [];
+            console.log('Current mistakes array:', mistakes);
+            
+            mistakes.push(testMistake);
+            console.log('Updated mistakes array:', mistakes);
+            
+            try {
+                localStorage.setItem('swedishLearningMistakes', JSON.stringify(mistakes));
+                console.log('Successfully saved to localStorage');
+                
+                // Verify it was saved
+                const saved = localStorage.getItem('swedishLearningMistakes');
+                console.log('Verification - saved data:', saved);
+                
+                document.getElementById('output').innerHTML = 'Test mistake added! Check console for details.';
+            } catch (error) {
+                console.error('Error saving to localStorage:', error);
+                document.getElementById('output').innerHTML = 'Error: ' + error.message;
+            }
+        }
+
+        function checkMistakes() {
+            const saved = localStorage.getItem('swedishLearningMistakes');
+            document.getElementById('output').innerHTML = `
+                <h3>LocalStorage Content:</h3>
+                <pre>${saved || 'No mistakes found'}</pre>
+            `;
+            console.log('Mistakes in localStorage:', saved);
+        }
+
+        function clearMistakes() {
+            localStorage.removeItem('swedishLearningMistakes');
+            document.getElementById('output').innerHTML = 'Mistakes cleared!';
+            console.log('Cleared all mistakes');
+        }
+
+        function testLocalStorage() {
+            try {
+                // Test basic localStorage functionality
+                localStorage.setItem('test', 'hello');
+                const result = localStorage.getItem('test');
+                console.log('Basic localStorage test:', result);
+                
+                if (result === 'hello') {
+                    document.getElementById('output').innerHTML = 'LocalStorage is working!';
+                } else {
+                    document.getElementById('output').innerHTML = 'LocalStorage test failed!';
+                }
+                
+                localStorage.removeItem('test');
+            } catch (error) {
+                console.error('LocalStorage error:', error);
+                document.getElementById('output').innerHTML = 'LocalStorage error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

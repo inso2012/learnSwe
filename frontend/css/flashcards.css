@@ -315,3 +315,124 @@
 .modal-content .btn-secondary:hover {
     background-color: #cbd5e0;
 }
+
+/* Sentence Examples Styles */
+.sentence-examples {
+    width: 100%;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #f0f4f8;
+}
+
+.examples-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.examples-header h4 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.btn-small {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    background: #4299e1;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-small:hover {
+    background: #3182ce;
+    transform: translateY(-1px);
+}
+
+.examples-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.examples-content.expanded {
+    max-height: 400px;
+    transition: max-height 0.4s ease-in;
+}
+
+.sentence-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.8rem;
+    transition: all 0.2s;
+}
+
+.sentence-item:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+}
+
+.sentence-item:last-child {
+    margin-bottom: 0;
+}
+
+.sentence-swedish {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2b6cb0;
+    margin-bottom: 0.4rem;
+    line-height: 1.4;
+}
+
+.sentence-english {
+    font-size: 1rem;
+    color: #4a5568;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+.sentence-difficulty {
+    display: inline-block;
+    background: #ed8936;
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    margin-top: 0.4rem;
+    font-weight: 500;
+}
+
+.sentence-difficulty.beginner {
+    background: #48bb78;
+}
+
+.sentence-difficulty.intermediate {
+    background: #ed8936;
+}
+
+.sentence-difficulty.advanced {
+    background: #e53e3e;
+}
+
+.loading-examples {
+    text-align: center;
+    padding: 1.5rem;
+    color: #718096;
+    font-style: italic;
+}
+
+.examples-error {
+    text-align: center;
+    padding: 1rem;
+    color: #e53e3e;
+    background: #fed7d7;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}

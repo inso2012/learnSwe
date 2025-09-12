@@ -20,6 +20,7 @@
     <script src="js/utility.js" defer></script>
     <script src="js/auth.js" defer></script>
     <script src="js/nav.js" defer></script>
+    <script src="js/modal.js" defer></script>
     <script src="js/dashboard.js" defer></script>
 </head>
 <body>
@@ -56,16 +57,18 @@
                     </div>
                 </div>
 
+                <div class="stat-card review-mistakes-card">
+                    <h3>Review Mistakes</h3>
+                    <div class="stat-value" id="mistakesCount">0</div>
+                    <button class="review-btn" id="reviewMistakesBtn" onclick="openReviewMistakes()">
+                        📚 Review Words
+                    </button>
+                </div>
+
                 <div class="stat-card">
                     <h3>Current Streak</h3>
                     <div class="stat-value" id="currentStreak">0 days</div>
                     <div class="streak-flame">🔥</div>
-                </div>
-
-                <div class="stat-card">
-                    <h3>Longest Streak</h3>
-                    <div class="stat-value" id="longestStreak">0 days</div>
-                    <div class="streak-trophy">🏆</div>
                 </div>
 
                 <div class="stat-card">

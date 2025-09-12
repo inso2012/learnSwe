@@ -2,7 +2,14 @@
  * Swedish Flashcards Learning System
  * Manages the flashcard learning experience including session management,
  * card display, progress tracking, and statistics.
+ * 
+ * @requires modal.js - Universal modal system for user notifications
+ * @requires auth.js - Authentication utilities
  */
+
+// Global functions from modal.js
+/* global showError, showAlert, showInfo, showSuccess, showConfirm */
+/* global checkAuth, verifyToken */
 
 // ============================================================================
 // Initialization
@@ -56,6 +63,9 @@ class FlashcardLearning {
         this.attachEventListeners();
         this.updateUserInfo();
         
+        // Check if we're in practice mode (from review mistakes page)
+        this.checkPracticeMode();
+        
         // Setup initial view
         this.setupSection.classList.remove('hidden');
         this.learningSection.classList.add('hidden');
@@ -64,7 +74,13 @@ class FlashcardLearning {
 
     loadMistakeHistory() {
         try {
-            const saved = localStorage.getItem('swedishLearningMistakes');
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) {
+                this.mistakeHistory = new Set();
+                return;
+            }
+            
+            const saved = localStorage.getItem(`swedishLearningMistakes_${userEmail}`);
             if (saved) {
                 const mistakes = JSON.parse(saved);
                 this.mistakeHistory = new Set(mistakes);
@@ -77,10 +93,120 @@ class FlashcardLearning {
 
     saveMistakeHistory() {
         try {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) return;
+            
             const mistakes = Array.from(this.mistakeHistory);
-            localStorage.setItem('swedishLearningMistakes', JSON.stringify(mistakes));
+            localStorage.setItem(`swedishLearningMistakes_${userEmail}`, JSON.stringify(mistakes));
         } catch (error) {
             console.error('Failed to save mistake history:', error);
+        }
+    }
+
+    checkPracticeMode() {
+        try {
+            const practiceWords = sessionStorage.getItem('practiceWords');
+            const practiceMode = sessionStorage.getItem('practiceMode');
+            
+            if (practiceWords && practiceMode === 'mistakes') {
+                const words = JSON.parse(practiceWords);
+                console.log('Practice mode detected for words:', words);
+                
+                // Set up practice session automatically
+                this.isPracticeMode = true;
+                this.practiceWords = words;
+                
+                // Update UI to show we're in practice mode
+                const setupTitle = document.querySelector('#setupSection h2');
+                if (setupTitle) {
+                    setupTitle.textContent = 'Practice Your Mistakes';
+                }
+                
+                const setupDescription = document.querySelector('#setupSection p');
+                if (setupDescription) {
+                    setupDescription.textContent = `Practice the ${words.length} words you got wrong.`;
+                }
+                
+                // Auto-start the session
+                this.startPracticeModeSession(words);
+                
+                // Clear the session storage
+                sessionStorage.removeItem('practiceWords');
+                sessionStorage.removeItem('practiceMode');
+            }
+        } catch (error) {
+            console.error('Error checking practice mode:', error);
+        }
+    }
+
+    async startPracticeModeSession(words) {
+        this.showLoading(true);
+        try {
+            console.log('Starting practice mode session with words:', words);
+            
+            // Create flashcards from the mistake words stored in localStorage
+            const mistakes = this.getMistakeCardsForWords(words);
+            
+            if (mistakes.length === 0) {
+                showError('No mistake data found for the selected words.', 'Practice Mode Error');
+                return;
+            }
+            
+            this.currentCards = mistakes;
+            this.currentCardIndex = 0;
+            this.resetSessionStats();
+            this.learnedWords.clear();
+            this.isPracticeMode = true;
+            
+            await this.displayCurrentCard();
+            
+            this.setupSection.classList.add('hidden');
+            this.learningSection.classList.remove('hidden');
+        } catch (error) {
+            console.error('Failed to start practice mode session:', error);
+            showError('Failed to start practice session: ' + error.message, 'Practice Mode Error');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    getMistakeCardsForWords(words) {
+        const mistakes = [];
+        
+        try {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) return [];
+            
+            const saved = localStorage.getItem(`swedishLearningMistakes_${userEmail}`);
+            if (!saved) return [];
+            
+            const mistakeStrings = JSON.parse(saved);
+            
+            mistakeStrings.forEach(mistakeJson => {
+                try {
+                    const mistake = JSON.parse(mistakeJson);
+                    if (words.includes(mistake.swedish)) {
+                        mistakes.push({
+                            swedish: mistake.swedish,
+                            english: mistake.english,
+                            type: mistake.type || 'noun',
+                            difficultyLevel: 1
+                        });
+                    }
+                } catch (error) {
+                    console.warn('Invalid mistake format:', mistakeJson);
+                }
+            });
+            
+            // Remove duplicates
+            const uniqueMistakes = mistakes.filter((mistake, index, self) => 
+                index === self.findIndex(m => m.swedish === mistake.swedish)
+            );
+            
+            return uniqueMistakes;
+        } catch (error) {
+            console.error('Error getting mistake cards:', error);
+            return [];
         }
     }
 
@@ -100,6 +226,9 @@ class FlashcardLearning {
         this.incorrectCount = document.getElementById('incorrectCount');
         this.accuracy = document.getElementById('accuracy');
         this.loadingOverlay = document.getElementById('loadingOverlay');
+        this.sentenceExamples = document.getElementById('sentenceExamples');
+        this.toggleExamples = document.getElementById('toggleExamples');
+        this.examplesContent = document.getElementById('examplesContent');
     }
 
     updateUserInfo() {
@@ -204,7 +333,7 @@ class FlashcardLearning {
             this.learningSection.classList.remove('hidden');
         } catch (error) {
             console.error('Failed to start session:', error);
-            alert('Failed to start session: ' + error.message);
+            showError('Failed to start session: ' + error.message, 'Session Error');
         } finally {
             this.showLoading(false);
         }
@@ -244,7 +373,8 @@ class FlashcardLearning {
         // Get and display answer options
         await this.setupAnswerOptions(card);
         
-        this.updateProgress();
+        // Setup sentence examples
+        this.setupSentenceExamples(card);
         
         this.updateProgress();
     }
@@ -316,7 +446,7 @@ class FlashcardLearning {
     }
 
     showNoCardsMessage() {
-        alert('No cards available for your current selection. Try adjusting the difficulty level or number of cards.');
+        showAlert('No cards available for your current selection. Try adjusting the difficulty level or number of cards.', 'No Cards Available');
         this.showLoading(false);
     }
 
@@ -324,22 +454,33 @@ class FlashcardLearning {
         const buttons = this.answerOptions.querySelectorAll('.answer-button');
         
         try {
-            // Get 3 random incorrect answers
-            const response = await fetch(`/api/learning/alternatives?word=${encodeURIComponent(card.swedish)}&count=3`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('swedishLearningToken')}`
-                }
-            });
+            let alternatives = [];
             
-            if (!response.ok) {
-                throw new Error('Failed to fetch alternatives');
+            // Try to fetch alternatives from API first
+            try {
+                const response = await fetch(`/api/learning/alternatives?word=${encodeURIComponent(card.swedish)}&count=3`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('swedishLearningToken')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success && Array.isArray(result.data) && result.data.length >= 3) {
+                        alternatives = result.data.slice(0, 3);
+                    }
+                }
+            } catch (apiError) {
+                console.log('API alternatives not available, using fallback');
             }
             
-            const result = await response.json();
-            const alternatives = result.data;
+            // If API failed or didn't return enough alternatives, use fallback
+            if (alternatives.length < 3) {
+                alternatives = this.generateFallbackAlternatives(card.english, card.type);
+            }
             
             // Combine correct answer with alternatives
-            const answers = [card.english, ...alternatives];
+            const answers = [card.english, ...alternatives.slice(0, 3)];
             // Shuffle the answers
             const shuffledAnswers = answers.sort(() => Math.random() - 0.5);
             
@@ -350,10 +491,15 @@ class FlashcardLearning {
                 button.disabled = false;
             });
         } catch (error) {
-            console.error('Failed to fetch alternatives:', error);
+            console.error('Failed to setup answer options:', error);
+            // Final fallback - create simple alternatives
+            const fallbackAlternatives = this.generateFallbackAlternatives(card.english, card.type);
+            const answers = [card.english, ...fallbackAlternatives.slice(0, 3)];
+            const shuffledAnswers = answers.sort(() => Math.random() - 0.5);
+            
             buttons.forEach((button, index) => {
-                if (index === 0) {
-                    button.textContent = card.english;
+                if (index < shuffledAnswers.length) {
+                    button.textContent = shuffledAnswers[index];
                     button.className = 'answer-button';
                     button.dataset.correct = 'true';
                 } else {
@@ -467,11 +613,17 @@ class FlashcardLearning {
     async completeSession() {
         console.log('=== COMPLETE SESSION CALLED ===');
         console.log('Is review session:', this.isReviewSession);
+        console.log('Is practice mode:', this.isPracticeMode);
         console.log('Current cards:', this.currentCards.length);
         console.log('Current card index:', this.currentCardIndex);
         
         if (this.isReviewSession) {
             this.completeReviewSession();
+            return;
+        }
+
+        if (this.isPracticeMode) {
+            this.completePracticeModeSession();
             return;
         }
 
@@ -539,6 +691,53 @@ class FlashcardLearning {
 
         // Show review completion message
         this.showReviewCompletionModal(reviewStats);
+    }
+
+    completePracticeModeSession() {
+        // Show completion screen for practice mode
+        this.setupSection.classList.add('hidden');
+        this.learningSection.classList.add('hidden');
+        this.completionSection.classList.remove('hidden');
+        
+        // Display session stats
+        this.displaySessionStats();
+        
+        // Show practice mode completion message
+        this.showPracticeModeCompletionModal();
+    }
+
+    showPracticeModeCompletionModal() {
+        const modal = document.getElementById('successModal');
+        if (modal) {
+            // Update modal content for practice mode completion
+            const emoji = modal.querySelector('.modal-emoji');
+            const title = modal.querySelector('h2');
+            const message = modal.querySelector('p');
+            const button = modal.querySelector('.custom-modal-button');
+            
+            const totalPracticed = this.sessionStats.correct + this.sessionStats.incorrect;
+            const practiceAccuracy = totalPracticed > 0 ? (this.sessionStats.correct / totalPracticed * 100).toFixed(1) : '0';
+            
+            if (emoji) emoji.textContent = '🎯';
+            if (title) title.textContent = 'Practice Complete!';
+            if (message) {
+                message.textContent = `You practiced ${totalPracticed} mistake${totalPracticed !== 1 ? 's' : ''} with ${practiceAccuracy}% accuracy. Keep improving!`;
+            }
+            if (button) button.textContent = 'Back to Review';
+            
+            // Show modal
+            modal.style.display = 'flex';
+            
+            // Add close event if not already added
+            if (button && !button.hasAttribute('data-practice-listener')) {
+                button.setAttribute('data-practice-listener', 'true');
+                button.addEventListener('click', () => {
+                    modal.style.display = 'none';
+                    // Go back to review mistakes page
+                    window.location.href = 'review-mistakes.html';
+                });
+            }
+        }
     }
 
     showReviewCompletionModal(reviewStats) {
@@ -701,6 +900,12 @@ class FlashcardLearning {
     }
 
     startNewSession() {
+        // If in practice mode, return to review mistakes page
+        if (this.isPracticeMode) {
+            window.location.href = 'review-mistakes.html';
+            return;
+        }
+
         // Reset everything and go back to setup
         this.completionSection.classList.add('hidden');
         this.learningSection.classList.add('hidden');
@@ -719,5 +924,166 @@ class FlashcardLearning {
         this.isProcessingAnswer = false;
         this.isReviewSession = false;
         this.originalSessionStats = null;
+        this.isPracticeMode = false;
+        this.practiceWords = null;
+        
+        // Reset UI text
+        const setupTitle = document.querySelector('#setupSection h2');
+        if (setupTitle) {
+            setupTitle.textContent = 'Practice Flashcards';
+        }
+        
+        const setupDescription = document.querySelector('#setupSection p');
+        if (setupDescription) {
+            setupDescription.textContent = 'Test your Swedish vocabulary with interactive flashcards.';
+        }
+    }
+
+    /**
+     * Generates fallback alternative answers when API is not available
+     * @param {string} correctAnswer - The correct English translation
+     * @param {string} wordType - Type of word (noun, verb, etc.)
+     * @returns {Array<string>} Array of 3 alternative wrong answers
+     */
+    generateFallbackAlternatives(correctAnswer, wordType = '') {
+        // Common fallback alternatives based on word type and common Swedish-English patterns
+        const commonAlternatives = {
+            nouns: ['house', 'book', 'table', 'chair', 'window', 'door', 'car', 'tree', 'water', 'food', 'hand', 'head', 'eye', 'day', 'night', 'time', 'work', 'home', 'school', 'friend'],
+            verbs: ['to go', 'to come', 'to see', 'to take', 'to give', 'to make', 'to know', 'to think', 'to say', 'to get', 'to work', 'to play', 'to eat', 'to drink', 'to sleep', 'to run', 'to walk', 'to read', 'to write', 'to help'],
+            adjectives: ['good', 'bad', 'big', 'small', 'new', 'old', 'hot', 'cold', 'fast', 'slow', 'easy', 'hard', 'happy', 'sad', 'nice', 'beautiful', 'ugly', 'clean', 'dirty', 'free'],
+            common: ['hello', 'goodbye', 'yes', 'no', 'please', 'thank you', 'sorry', 'excuse me', 'how', 'what', 'where', 'when', 'who', 'why', 'much', 'many', 'some', 'all', 'every', 'other']
+        };
+
+        // Determine appropriate pool of alternatives
+        let alternativePool = [...commonAlternatives.common];
+        
+        if (wordType && (wordType.toLowerCase().includes('noun') || /^(a |an |the )/.test(correctAnswer))) {
+            alternativePool = [...alternativePool, ...commonAlternatives.nouns];
+        } else if (wordType && (wordType.toLowerCase().includes('verb') || correctAnswer.startsWith('to '))) {
+            alternativePool = [...alternativePool, ...commonAlternatives.verbs];
+        } else if (wordType && wordType.toLowerCase().includes('adjective')) {
+            alternativePool = [...alternativePool, ...commonAlternatives.adjectives];
+        } else {
+            // Mix all types for unknown word types
+            alternativePool = [
+                ...alternativePool,
+                ...commonAlternatives.nouns.slice(0, 5),
+                ...commonAlternatives.verbs.slice(0, 5),
+                ...commonAlternatives.adjectives.slice(0, 5)
+            ];
+        }
+
+        // Remove the correct answer if it exists in the pool
+        alternativePool = alternativePool.filter(word => 
+            word.toLowerCase() !== correctAnswer.toLowerCase()
+        );
+
+        // Shuffle and return 3 alternatives
+        const shuffled = alternativePool.sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, 3);
+    }
+
+    /**
+     * Setup sentence examples section for the current word
+     * @param {Object} card - Current flashcard data
+     */
+    setupSentenceExamples(card) {
+        if (!this.sentenceExamples || !this.toggleExamples || !this.examplesContent) {
+            return;
+        }
+
+        // Show the sentence examples section
+        this.sentenceExamples.style.display = 'block';
+        
+        // Reset toggle button and examples content
+        this.toggleExamples.textContent = 'Show Examples';
+        this.examplesContent.classList.remove('expanded');
+        this.examplesContent.innerHTML = '<div class="loading-examples">Loading examples...</div>';
+        
+        // Set up toggle functionality
+        this.toggleExamples.onclick = () => this.toggleSentenceExamples(card);
+    }
+
+    /**
+     * Toggle sentence examples visibility and load if needed
+     * @param {Object} card - Current flashcard data
+     */
+    async toggleSentenceExamples(card) {
+        const isExpanded = this.examplesContent.classList.contains('expanded');
+        
+        if (isExpanded) {
+            // Hide examples
+            this.examplesContent.classList.remove('expanded');
+            this.toggleExamples.textContent = 'Show Examples';
+        } else {
+            // Show examples
+            this.toggleExamples.textContent = 'Hide Examples';
+            this.examplesContent.classList.add('expanded');
+            
+            // Load examples if not already loaded or if content is just loading message
+            if (this.examplesContent.innerHTML.includes('Loading examples...')) {
+                await this.loadSentenceExamples(card);
+            }
+        }
+    }
+
+    /**
+     * Fetch and display sentence examples for the current word
+     * @param {Object} card - Current flashcard data
+     */
+    async loadSentenceExamples(card) {
+        try {
+            const token = localStorage.getItem('swedishLearningToken');
+            const response = await fetch(`/api/learning/sentences?word=${encodeURIComponent(card.swedish)}&count=3`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch sentence examples');
+            }
+
+            const result = await response.json();
+            
+            if (result.success && result.data.sentences) {
+                this.displaySentenceExamples(result.data.sentences);
+            } else {
+                throw new Error('No sentence examples available');
+            }
+        } catch (error) {
+            console.error('Error loading sentence examples:', error);
+            this.examplesContent.innerHTML = `
+                <div class="examples-error">
+                    Unable to load examples for this word. Please try again later.
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Display sentence examples in the UI
+     * @param {Array} sentences - Array of sentence objects
+     */
+    displaySentenceExamples(sentences) {
+        if (!sentences || sentences.length === 0) {
+            this.examplesContent.innerHTML = `
+                <div class="examples-error">
+                    No examples available for this word.
+                </div>
+            `;
+            return;
+        }
+
+        const sentencesHtml = sentences.map(sentence => `
+            <div class="sentence-item">
+                <div class="sentence-swedish">${sentence.swedish}</div>
+                <div class="sentence-english">${sentence.english}</div>
+                <span class="sentence-difficulty ${sentence.difficulty}">${sentence.difficulty}</span>
+            </div>
+        `).join('');
+
+        this.examplesContent.innerHTML = sentencesHtml;
     }
 }

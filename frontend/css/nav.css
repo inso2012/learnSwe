@@ -24,6 +24,20 @@ nav {
 .nav-container .user-info .user-email {
     color: #4a5568;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+/* Alternative class for user display name */
+.nav-container .user-info .user-name {
+    color: #4a5568;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
 }
 
 .nav-container .user-info #logoutBtn {

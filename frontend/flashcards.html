@@ -20,6 +20,7 @@
     <script src="js/utility.js" defer></script>
     <script src="js/auth.js" defer></script>
     <script src="js/nav.js" defer></script>
+    <script src="js/modal.js" defer></script>
     <script src="js/flashcards.js" defer></script>
 </head>
 <body>
@@ -93,6 +94,17 @@
                     <div class="mastery-info" id="masteryInfo">
                         <span class="mastery-level">New Word</span>
                         <span class="success-rate">Success: 0%</span>
+                    </div>
+                    
+                    <!-- Sentence Examples Section -->
+                    <div class="sentence-examples" id="sentenceExamples" style="display: none;">
+                        <div class="examples-header">
+                            <h4>📖 Example Sentences</h4>
+                            <button id="toggleExamples" class="btn btn-small">Show Examples</button>
+                        </div>
+                        <div class="examples-content" id="examplesContent">
+                            <div class="loading-examples">Loading examples...</div>
+                        </div>
                     </div>
                 </div>
 

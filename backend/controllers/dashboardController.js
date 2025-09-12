@@ -13,7 +13,6 @@ async function getUserProfile(req, res) {
                 'createdAt', 
                 'totalWordsLearned',
                 'currentStreak', 
-                'longestStreak',
                 'totalQuizzesTaken',
                 'averageQuizScore'
             ]

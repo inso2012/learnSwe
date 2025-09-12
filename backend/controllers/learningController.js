@@ -493,11 +493,183 @@ async function getWordAlternatives(req, res) {
     }
 }
 
+/**
+ * Get example sentences using a Swedish word
+ */
+async function getWordSentences(req, res) {
+    try {
+        const { word, count = 3 } = req.query;
+        
+        if (!word) {
+            return res.status(400).json({
+                success: false,
+                error: 'Word parameter is required'
+            });
+        }
+
+        // Find the word in database to get its details
+        const wordEntry = await Word.findOne({
+            where: {
+                swedish: {
+                    [Op.iLike]: word
+                }
+            }
+        });
+
+        if (!wordEntry) {
+            return res.status(404).json({
+                success: false,
+                error: 'Word not found in database'
+            });
+        }
+
+        const sentences = generateExampleSentences(wordEntry, parseInt(count));
+        
+        res.status(200).json({
+            success: true,
+            data: {
+                word: wordEntry.swedish,
+                english: wordEntry.english,
+                type: wordEntry.type,
+                sentences
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error getting word sentences:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+/**
+ * Generate example sentences for a Swedish word based on its type and meaning
+ */
+function generateExampleSentences(wordEntry, count = 3) {
+    const { swedish, english, type } = wordEntry;
+    
+    // Sentence templates based on word type
+    const templates = {
+        noun: [
+            `Jag såg en ${swedish} på gatan.`, // I saw a [word] on the street
+            `${swedish}en är mycket stor.`, // The [word] is very big  
+            `Var är min ${swedish}?`, // Where is my [word]?
+            `Hon köpte en ny ${swedish}.`, // She bought a new [word]
+            `Denna ${swedish} kostar mycket pengar.`, // This [word] costs a lot of money
+            `Barnet leker med ${swedish}en.`, // The child plays with the [word]
+            `Vi behöver en ${swedish} till köket.`, // We need a [word] for the kitchen
+            `${swedish}en är röd och fin.` // The [word] is red and nice
+        ],
+        verb: [
+            `Jag ska ${swedish} imorgon.`, // I will [verb] tomorrow
+            `Hon gillar att ${swedish}.`, // She likes to [verb]
+            `Vi kan ${swedish} tillsammans.`, // We can [verb] together
+            `Barn lär sig att ${swedish}.`, // Children learn to [verb]
+            `Det är kul att ${swedish}.`, // It's fun to [verb]
+            `Jag försöker ${swedish} varje dag.`, // I try to [verb] every day
+            `Hon vill ${swedish} mer.`, // She wants to [verb] more
+            `Vi ska ${swedish} på lördag.` // We will [verb] on Saturday
+        ],
+        adjective: [
+            `Huset är mycket ${swedish}.`, // The house is very [adjective]
+            `Hon har ${swedish} ögon.`, // She has [adjective] eyes
+            `Maten var ${swedish} och god.`, // The food was [adjective] and good
+            `Det är en ${swedish} dag idag.`, // It's a [adjective] day today
+            `Bilen är ${swedish} och snabb.`, // The car is [adjective] and fast
+            `Katten är ${swedish} och mjuk.`, // The cat is [adjective] and soft
+            `Väder blir ${swedish} imorgon.`, // The weather will be [adjective] tomorrow
+            `Filmen var ${swedish} att titta på.` // The movie was [adjective] to watch
+        ],
+        adverb: [
+            `Hon springer ${swedish}.`, // She runs [adverb]
+            `Jag kom ${swedish} till skolan.`, // I came [adverb] to school
+            `De arbetade ${swedish} hela dagen.`, // They worked [adverb] all day
+            `Barnet sover ${swedish}.`, // The child sleeps [adverb]
+            `Hon pratar ${swedish} svenska.`, // She speaks Swedish [adverb]
+            `Vi går ${swedish} hem.`, // We go home [adverb]
+            `Han äter ${swedish}.`, // He eats [adverb]
+            `De kom ${swedish} till festen.` // They came [adverb] to the party
+        ]
+    };
+    
+    // English translations for the templates
+    const translations = {
+        noun: [
+            `I saw a ${english} on the street.`,
+            `The ${english} is very big.`,
+            `Where is my ${english}?`,
+            `She bought a new ${english}.`,
+            `This ${english} costs a lot of money.`,
+            `The child plays with the ${english}.`,
+            `We need a ${english} for the kitchen.`,
+            `The ${english} is red and nice.`
+        ],
+        verb: [
+            `I will ${english} tomorrow.`,
+            `She likes to ${english}.`,
+            `We can ${english} together.`,
+            `Children learn to ${english}.`,
+            `It's fun to ${english}.`,
+            `I try to ${english} every day.`,
+            `She wants to ${english} more.`,
+            `We will ${english} on Saturday.`
+        ],
+        adjective: [
+            `The house is very ${english}.`,
+            `She has ${english} eyes.`,
+            `The food was ${english} and good.`,
+            `It's a ${english} day today.`,
+            `The car is ${english} and fast.`,
+            `The cat is ${english} and soft.`,
+            `The weather will be ${english} tomorrow.`,
+            `The movie was ${english} to watch.`
+        ],
+        adverb: [
+            `She runs ${english}.`,
+            `I came ${english} to school.`,
+            `They worked ${english} all day.`,
+            `The child sleeps ${english}.`,
+            `She speaks Swedish ${english}.`,
+            `We go home ${english}.`,
+            `He eats ${english}.`,
+            `They came ${english} to the party.`
+        ]
+    };
+    
+    // Get templates for the word type, default to noun if type not found
+    const wordType = type || 'noun';
+    const availableTemplates = templates[wordType] || templates.noun;
+    const availableTranslations = translations[wordType] || translations.noun;
+    
+    // Select random sentences
+    const selectedIndices = [];
+    const sentences = [];
+    
+    for (let i = 0; i < Math.min(count, availableTemplates.length); i++) {
+        let randomIndex;
+        do {
+            randomIndex = Math.floor(Math.random() * availableTemplates.length);
+        } while (selectedIndices.includes(randomIndex));
+        
+        selectedIndices.push(randomIndex);
+        sentences.push({
+            swedish: availableTemplates[randomIndex],
+            english: availableTranslations[randomIndex],
+            difficulty: wordType === 'adjective' || wordType === 'adverb' ? 'intermediate' : 'beginner'
+        });
+    }
+    
+    return sentences;
+}
+
 module.exports = {
     getFlashcards,
     generateVocabularyQuiz,
     getTranslationExercise,
     getWordSuggestions,
     submitLearningSession,
-    getWordAlternatives
+    getWordAlternatives,
+    getWordSentences
 };

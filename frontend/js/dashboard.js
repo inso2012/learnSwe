@@ -8,7 +8,6 @@
         wordsLearned: null,
         wordsProgress: null,
         currentStreak: null,
-        longestStreak: null,
         quizzesTaken: null,
         activityList: null,
         progressBars: {},
@@ -21,7 +20,7 @@
 function initializeElements() {
     // Initialize main elements
     ['userDisplayName', 'memberSince', 'wordsLearned', 'wordsProgress',
-     'currentStreak', 'longestStreak', 'quizzesTaken', 'activityList'].forEach(key => {
+     'currentStreak', 'quizzesTaken', 'activityList'].forEach(key => {
         elements[key] = document.getElementById(key);
     });
 
@@ -52,15 +51,23 @@ async function loadDashboard() {
         }
 
         const userData = await userResponse.json();
+        const user = userData.data || userData; // Handle different response structures
         
-        // Update user profile section
-        if (elements.userDisplayName) elements.userDisplayName.textContent = userData.username || userData.email;
-        if (elements.memberSince) elements.memberSince.textContent = new Date(userData.createdAt).toLocaleDateString();
+        // Update user profile section with first name and full name
+        if (elements.userDisplayName) {
+            const displayName = user.firstName ? `${user.firstName} ${user.lastName}` : (user.username || user.email);
+            elements.userDisplayName.textContent = displayName;
+        }
+        
+        // Use registration date if available, otherwise fall back to createdAt
+        if (elements.memberSince) {
+            const memberDate = user.registrationDate || user.createdAt;
+            elements.memberSince.textContent = new Date(memberDate).toLocaleDateString();
+        }
         
         // Update statistics
         if (elements.wordsLearned) elements.wordsLearned.textContent = userData.totalWordsLearned || 0;
         if (elements.currentStreak) elements.currentStreak.textContent = `${userData.currentStreak || 0} days`;
-        if (elements.longestStreak) elements.longestStreak.textContent = `${userData.longestStreak || 0} days`;
         if (elements.quizzesTaken) elements.quizzesTaken.textContent = userData.totalQuizzesTaken || 0;
 
         // Calculate words progress
@@ -79,13 +86,9 @@ async function loadDashboard() {
 
         if (statsResponse.ok) {
             const statsData = await statsResponse.json();
-            console.log('=== DASHBOARD STATS DATA ===');
-            console.log('Raw stats response:', statsData);
             
             // Extract the actual stats from the response wrapper
             const actualStats = statsData.data || statsData;
-            console.log('Actual stats data:', actualStats);
-            console.log('Total words learned from stats:', actualStats.totalWordsLearned);
             
             updateWordTypeProgress(actualStats.wordTypeStats || {});
             updateLearningProgress(actualStats);
@@ -113,16 +116,10 @@ async function loadDashboard() {
 }
 
 function updateLearningProgress(stats) {
-    console.log('=== UPDATING LEARNING PROGRESS ===');
-    console.log('Stats object:', stats);
-    console.log('Setting words learned to:', stats.totalWordsLearned || 0);
-    
     if (elements.wordsLearned) {
         elements.wordsLearned.textContent = stats.totalWordsLearned || 0;
-        console.log('Words learned element updated, now shows:', elements.wordsLearned.textContent);
     }
     if (elements.currentStreak) elements.currentStreak.textContent = `${stats.currentStreak || 0} days`;
-    if (elements.longestStreak) elements.longestStreak.textContent = `${stats.longestStreak || 0} days`;
     if (elements.quizzesTaken) elements.quizzesTaken.textContent = stats.totalQuizzesTaken || 0;
 
     if (elements.wordsProgress) {
@@ -200,4 +197,128 @@ document.addEventListener('visibilitychange', async () => {
     }
 });
 
+// Update mistakes count on dashboard
+function updateMistakesCount() {
+    try {
+        const userEmail = localStorage.getItem('userEmail');
+        
+        if (!userEmail) {
+            // If no user email, set count to 0
+            const mistakesCountElement = document.getElementById('mistakesCount');
+            if (mistakesCountElement) {
+                mistakesCountElement.textContent = '0';
+            }
+            return;
+        }
+        
+        const mistakeKey = `swedishLearningMistakes_${userEmail}`;
+        const saved = localStorage.getItem(mistakeKey);
+        
+        let mistakesCount = 0;
+        
+        if (saved) {
+            const mistakeStrings = JSON.parse(saved);
+            // Count unique mistakes by converting to objects and checking swedish words
+            const uniqueWords = new Set();
+            mistakeStrings.forEach(mistakeJson => {
+                try {
+                    const mistake = JSON.parse(mistakeJson);
+                    if (mistake.swedish) {
+                        uniqueWords.add(mistake.swedish);
+                    }
+                } catch (error) {
+                    // Skip invalid entries
+                }
+            });
+            mistakesCount = uniqueWords.size;
+        }
+        
+        const mistakesCountElement = document.getElementById('mistakesCount');
+        if (mistakesCountElement) {
+            mistakesCountElement.textContent = mistakesCount;
+        }
+        
+        // Update button state
+        const reviewBtn = document.getElementById('reviewMistakesBtn');
+        if (reviewBtn) {
+            if (mistakesCount === 0) {
+                reviewBtn.disabled = true;
+                reviewBtn.textContent = '📚 No Mistakes to Review';
+                reviewBtn.style.opacity = '0.6';
+                
+                // Check if user has learned words but no mistakes (might indicate data was reset)
+                const totalWordsLearned = parseInt(document.getElementById('wordsLearned')?.textContent || '0');
+                if (totalWordsLearned > 0 && !localStorage.getItem('mistakeResetNoticeShown')) {
+                    // Show one-time notice about mistake data reset
+                    setTimeout(() => {
+                        if (typeof showAlert === 'function') {
+                            showAlert('Mistake tracking has been reset with the recent system updates. Continue practicing to build up your review list!', 'info');
+                        }
+                        localStorage.setItem('mistakeResetNoticeShown', 'true');
+                    }, 2000);
+                }
+            } else {
+                reviewBtn.disabled = false;
+                reviewBtn.textContent = '📚 Review Words';
+                reviewBtn.style.opacity = '1';
+            }
+        }
+    } catch (error) {
+        console.error('Error updating mistakes count:', error);
+    }
+}
+
+// Initialize mistakes count when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    migrateOldMistakeData();
+    updateMistakesCount();
+});
+
+// Function to migrate old mistake data to user-specific storage and clean up
+function migrateOldMistakeData() {
+    try {
+        const userEmail = localStorage.getItem('userEmail');
+        if (!userEmail) {
+            return;
+        }
+        
+        // Check if there's old generic mistake data
+        const oldMistakes = localStorage.getItem('swedishLearningMistakes');
+        const userSpecificKey = `swedishLearningMistakes_${userEmail}`;
+        const userMistakes = localStorage.getItem(userSpecificKey);
+        
+        // If there's old data and no user-specific data yet, migrate it
+        if (oldMistakes && !userMistakes) {
+            localStorage.setItem(userSpecificKey, oldMistakes);
+        }
+        
+        // Always remove the old generic key to prevent confusion
+        if (oldMistakes) {
+            localStorage.removeItem('swedishLearningMistakes');
+        }
+        
+    } catch (error) {
+        console.error('Error during mistake data migration:', error);
+    }
+}
+
+
+
+// Listen for storage changes to update count when mistakes are added/removed
+window.addEventListener('storage', (e) => {
+    if (e.key && e.key.startsWith('swedishLearningMistakes_')) {
+        updateMistakesCount();
+    }
+});
+
+// Also update when returning from other pages
+window.addEventListener('focus', () => {
+    updateMistakesCount();
+});
+
 })(); // Close the IIFE
+
+// Global function to open review mistakes page
+function openReviewMistakes() {
+    window.location.href = 'review-mistakes.html';
+}

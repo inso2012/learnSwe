@@ -6,7 +6,8 @@ const {
     getTranslationExercise,
     getWordSuggestions,
     submitLearningSession,
-    getWordAlternatives
+    getWordAlternatives,
+    getWordSentences
 } = require('../controllers/learningController');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -59,5 +60,13 @@ router.post('/session/submit', submitLearningSession);
  * @query   ?word=string&count=number
  */
 router.get('/alternatives', getWordAlternatives);
+
+/**
+ * @route   GET /api/learning/sentences
+ * @desc    Get example sentences using a Swedish word
+ * @access  Private
+ * @query   ?word=string&count=number
+ */
+router.get('/sentences', getWordSentences);
 
 module.exports = router;

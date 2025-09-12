@@ -66,13 +66,8 @@ async function recordWordProgress(userId, wordId, isCorrect) {
         
         await progress.save({ transaction: t });
         
-        // Update user's total words learned if word is newly mastered
-        if (progress.masteryLevel === 'mastered' && progress.changed('masteryLevel')) {
-            await User.increment('totalWordsLearned', {
-                where: { id: userId },
-                transaction: t
-            });
-        }
+        // Note: totalWordsLearned is updated at session level, not per individual word
+        // to avoid double counting when multiple words are learned in a session
         
         await t.commit();
         return progress;
@@ -240,7 +235,6 @@ async function updateUserStreak(userId, transaction) {
     });
     
     let currentStreak = 0;
-    let longestStreak = 0;
     let tempStreak = 0;
     
     // Calculate current streak (consecutive days from today)
@@ -253,21 +247,13 @@ async function updateUserStreak(userId, transaction) {
             currentStreak++;
             tempStreak++;
         } else {
-            if (tempStreak > longestStreak) {
-                longestStreak = tempStreak;
-            }
             tempStreak = daysDiff === 0 ? 1 : 0;
         }
     }
     
-    if (tempStreak > longestStreak) {
-        longestStreak = tempStreak;
-    }
-    
     // Update user record
     await User.update({
-        currentStreak,
-        longestStreak: Math.max(longestStreak, currentStreak)
+        currentStreak
     }, {
         where: { id: userId },
         transaction
@@ -283,8 +269,8 @@ async function getUserStats(userId) {
     const [user, masteryStats, totalWordsCount] = await Promise.all([
         User.findByPk(userId, {
             attributes: [
+                'totalWordsLearned',
                 'currentStreak', 
-                'longestStreak', 
                 'totalQuizzesTaken', 
                 'averageQuizScore'
             ],
@@ -309,12 +295,43 @@ async function getUserStats(userId) {
             }
         })
     ]);
-
+    
+    console.log('=== GET USER STATS DEBUG ===');
+    console.log('User ID:', userId);
+    console.log('Total words count from query:', totalWordsCount);
+    console.log('User stored totalWordsLearned:', user?.totalWordsLearned);
+    
+    // Calculate the true total words learned (use the maximum of stored value and progress count)
+    const actualTotalWordsLearned = Math.max(
+        user?.totalWordsLearned || 0,
+        totalWordsCount || 0
+    );
+    console.log('Calculated actual total:', actualTotalWordsLearned);
+    
+    // Debug: Get actual records to see what exists
+    const debugRecords = await UserWordProgress.findAll({
+        where: { 
+            userId,
+            masteryLevel: { [Op.in]: ['shown', 'practicing', 'mastered'] }
+        },
+        include: [{
+            model: Word,
+            as: 'word',
+            attributes: ['swedish', 'english']
+        }],
+        attributes: ['masteryLevel', 'createdAt'],
+        order: [['createdAt', 'DESC']],
+        limit: 20
+    });
+    console.log('Recent progress records:', debugRecords.map(r => ({
+        word: r.word?.swedish,
+        masteryLevel: r.masteryLevel,
+        created: r.createdAt
+    })));
+    
     if (!user) {
         throw new Error('User not found');
-    }
-
-    // Get recent quiz performance (last 7 days)
+    }    // Get recent quiz performance (last 7 days)
     const recentQuizzes = await QuizSession.findAll({
         where: {
             userId,
@@ -342,9 +359,8 @@ async function getUserStats(userId) {
     // Format user stats with defaults
     return {
         ...user,
-        totalWordsLearned: totalWordsCount || 0,
+        totalWordsLearned: actualTotalWordsLearned,
         currentStreak: user.currentStreak || 0,
-        longestStreak: user.longestStreak || 0,
         totalQuizzesTaken: user.totalQuizzesTaken || 0,
         averageQuizScore: user.averageQuizScore || 0,
         masteryStats: masteryStats.reduce((acc, { masteryLevel, count }) => {
@@ -406,21 +422,49 @@ async function updateLearnedWords(userId, learnedWords) {
             transaction: t
         });
 
-        // Process each word
+        // Process each word and track which ones are newly learned
+        let newlyLearnedCount = 0;
+        
+        console.log(`Processing ${words.length} words for user ${userId}:`);
+        
         for (const word of words) {
+            // Check if this word already has progress for this user
+            const existingProgress = await UserWordProgress.findOne({
+                where: {
+                    userId: userId,
+                    wordId: word.id
+                },
+                transaction: t
+            });
+            
+            // If no existing progress, this is a newly learned word
+            if (!existingProgress) {
+                newlyLearnedCount++;
+                console.log(`  - "${word.swedish}" is NEW (will count toward total)`);
+            } else {
+                console.log(`  - "${word.swedish}" already exists (won't count toward total)`);
+            }
+            
             await recordWordProgress(userId, word.id, true);
         }
 
-        // Update user stats
-        await User.increment('totalWordsLearned', {
-            by: words.length,
-            where: { id: userId },
-            transaction: t
-        });
+        console.log(`Total words in session: ${words.length}, Newly learned: ${newlyLearnedCount}`);
 
-        // Update learning streak
+        // Only increment totalWordsLearned for newly learned words
+        if (newlyLearnedCount > 0) {
+            await User.increment('totalWordsLearned', {
+                by: newlyLearnedCount,
+                where: { id: userId },
+                transaction: t
+            });
+            console.log(`Incremented totalWordsLearned by ${newlyLearnedCount}`);
+        } else {
+            console.log('No new words to count - totalWordsLearned not incremented');
+        }
+
+        // Update learning streak with newly learned words count
         await updateLearningStreak(userId, {
-            wordsLearned: words.length,
+            wordsLearned: newlyLearnedCount,
             timeSpent: 0 // We don't track time per word in flashcards
         }, t);
 

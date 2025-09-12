@@ -44,7 +44,6 @@ async function getStats(req, res) {
             ...stats,
             totalWordsLearned: stats.totalWordsLearned || 0,
             currentStreak: stats.currentStreak || 0,
-            longestStreak: stats.longestStreak || 0,
             totalQuizzesTaken: stats.totalQuizzesTaken || 0,
             averageQuizScore: stats.averageQuizScore || 0,
             wordTypeStats: wordTypeStats.reduce((acc, curr) => {

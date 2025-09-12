@@ -15,14 +15,31 @@ const sequelize = new Sequelize(
 
 /**
  * User Model
+ * @property {String} firstName - User's first name
+ * @property {String} lastName - User's last name
  * @property {String} username - Unique username
  * @property {String} email - User's email address
  * @property {String} password - Hashed password
+ * @property {Date} registrationDate - Date when user registered
  * @property {Date} lastLogin - Last login timestamp
  * @property {Integer} totalWordsLearned - Count of words learned
  * @property {Integer} currentStreak - Current learning streak in days
  */
 const User = sequelize.define('User', {
+    firstName: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            len: [1, 50]
+        }
+    },
+    lastName: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+            len: [1, 50]
+        }
+    },
     username: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -47,6 +64,11 @@ const User = sequelize.define('User', {
             len: [6, 255]
         }
     },
+    registrationDate: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+        defaultValue: DataTypes.NOW
+    },
     lastLogin: {
         type: DataTypes.DATE,
         allowNull: true
@@ -56,10 +78,6 @@ const User = sequelize.define('User', {
         defaultValue: 0
     },
     currentStreak: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0
-    },
-    longestStreak: {
         type: DataTypes.INTEGER,
         defaultValue: 0
     },

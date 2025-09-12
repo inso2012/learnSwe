@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Demo - Learn Swedish</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/modal.js" defer></script>
+</head>
+<body style="padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
+    <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+        <h1>Universal Modal System Demo</h1>
+        <p>All modals across the Learn Swedish application now use consistent styling!</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem;">
+            <button onclick="showInfo('This is an informational message.', 'Information')" 
+                    style="padding: 1rem; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                Show Info Modal
+            </button>
+            
+            <button onclick="showAlert('Please complete this action before proceeding.', 'Warning')" 
+                    style="padding: 1rem; background: #f39c12; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                Show Alert Modal
+            </button>
+            
+            <button onclick="showError('Something went wrong. Please try again.', 'Error')" 
+                    style="padding: 1rem; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                Show Error Modal
+            </button>
+            
+            <button onclick="showSuccess('Operation completed successfully!', 'Success')" 
+                    style="padding: 1rem; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                Show Success Modal
+            </button>
+            
+            <button onclick="showConfirm('Are you sure you want to delete this item?', 'Confirm Action', handleConfirm)" 
+                    style="padding: 1rem; background: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                Show Confirm Modal
+            </button>
+            
+            <button onclick="universalModal.show({title: 'Custom Modal', message: 'This is a custom modal with emoji!', icon: '🎉', primaryText: 'Great!'})" 
+                    style="padding: 1rem; background: #2c3e50; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                Custom Modal
+            </button>
+        </div>
+        
+        <div id="result" style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 6px; display: none;">
+            <strong>Callback Result:</strong> <span id="resultText"></span>
+        </div>
+    </div>
+    
+    <script>
+        function handleConfirm(result) {
+            const resultDiv = document.getElementById('result');
+            const resultText = document.getElementById('resultText');
+            resultText.textContent = result ? 'User confirmed!' : 'User cancelled.';
+            resultDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

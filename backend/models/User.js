@@ -6,11 +6,11 @@ const { Op } = require('sequelize');
 
 /**
  * Create a new user
- * @param {Object} userData - { username, email, password }
+ * @param {Object} userData - { firstName, lastName, username, email, password }
  * @returns {Promise<Object>}
  */
 async function createUser(userData) {
-    const { username, email, password } = userData;
+    const { firstName, lastName, username, email, password } = userData;
     
     // Check if user already exists
     const existingUser = await User.findOne({ 
@@ -29,9 +29,12 @@ async function createUser(userData) {
     
     // Create user
     const user = await User.create({
+        firstName,
+        lastName,
         username,
         email,
-        password: hashedPassword
+        password: hashedPassword,
+        registrationDate: new Date()
     });
     
     // Remove password from response

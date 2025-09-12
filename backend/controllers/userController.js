@@ -11,13 +11,13 @@ const {
  */
 async function register(req, res) {
     try {
-        const { username, email, password } = req.body;
+        const { firstName, lastName, username, email, password } = req.body;
         
         // Basic validation
-        if (!username || !email || !password) {
+        if (!firstName || !lastName || !username || !email || !password) {
             return res.status(400).json({
                 success: false,
-                error: 'Username, email, and password are required'
+                error: 'First name, last name, username, email, and password are required'
             });
         }
         
@@ -28,7 +28,7 @@ async function register(req, res) {
             });
         }
         
-        const user = await createUser({ username, email, password });
+        const user = await createUser({ firstName, lastName, username, email, password });
         
         res.status(201).json({
             success: true,
