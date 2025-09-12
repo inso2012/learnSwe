@@ -1,0 +1,14 @@
+{
+  "testEnvironment": "node",
+  "setupFiles": ["<rootDir>/tests/jest.env.js"],
+  "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+  "testMatch": ["**/tests/**/*.test.js"],
+  "collectCoverageFrom": [
+    "backend/**/*.js",
+    "!backend/app.js",
+    "!backend/scripts/**",
+    "!backend/migrations/**"
+  ],
+  "coverageDirectory": "coverage",
+  "verbose": true
+}

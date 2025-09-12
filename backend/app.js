@@ -67,5 +67,10 @@ const startServer = async () => {
     }
 };
 
-// Call the function to start the application
-startServer();
+// Export the app for testing
+module.exports = app;
+
+// Start the server only if this file is run directly (not imported)
+if (require.main === module) {
+    startServer();
+}

@@ -507,12 +507,10 @@ async function getWordSentences(req, res) {
             });
         }
 
-        // Find the word in database to get its details
+        // Find the word in database to get its details (case-sensitive for SQLite compatibility)
         const wordEntry = await Word.findOne({
             where: {
-                swedish: {
-                    [Op.iLike]: word
-                }
+                swedish: word
             }
         });
 
@@ -643,11 +641,12 @@ function generateExampleSentences(wordEntry, count = 3) {
     const availableTemplates = templates[wordType] || templates.noun;
     const availableTranslations = translations[wordType] || translations.noun;
     
-    // Select random sentences
+    // Select random sentences (max 5 to prevent overwhelming response)
     const selectedIndices = [];
     const sentences = [];
+    const maxSentences = Math.min(count, availableTemplates.length, 5);
     
-    for (let i = 0; i < Math.min(count, availableTemplates.length); i++) {
+    for (let i = 0; i < maxSentences; i++) {
         let randomIndex;
         do {
             randomIndex = Math.floor(Math.random() * availableTemplates.length);

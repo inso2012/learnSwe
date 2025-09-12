@@ -16,11 +16,14 @@ const { Op } = require('sequelize');
  * @param {boolean} isCorrect 
  * @returns {Promise<Object>}
  */
-async function recordWordProgress(userId, wordId, isCorrect) {
-    const t = await sequelize.transaction();
+async function recordWordProgress(userId, wordId, isCorrect, transaction = null) {
+    console.log(`    recordWordProgress: Starting for userId=${userId}, wordId=${wordId}`);
+    const t = transaction || await sequelize.transaction();
+    const shouldCommit = !transaction; // Only commit if we created the transaction
     
     try {
         // Find or create user word progress record
+        console.log(`    recordWordProgress: About to findOrCreate`);
         let [progress] = await UserWordProgress.findOrCreate({
             where: { userId, wordId },
             defaults: {
@@ -34,6 +37,7 @@ async function recordWordProgress(userId, wordId, isCorrect) {
             },
             transaction: t
         });
+        console.log(`    recordWordProgress: findOrCreate completed, masteryLevel: ${progress.masteryLevel}`);
 
         // Update progress
         progress.totalAttempts += 1;
@@ -69,11 +73,20 @@ async function recordWordProgress(userId, wordId, isCorrect) {
         // Note: totalWordsLearned is updated at session level, not per individual word
         // to avoid double counting when multiple words are learned in a session
         
-        await t.commit();
+        if (shouldCommit) {
+            console.log(`    recordWordProgress: About to commit transaction`);
+            await t.commit();
+            console.log(`    recordWordProgress: Transaction committed successfully`);
+        } else {
+            console.log(`    recordWordProgress: Using existing transaction, not committing`);
+        }
         return progress;
         
     } catch (error) {
-        await t.rollback();
+        console.error(`    recordWordProgress: Error occurred:`, error);
+        if (shouldCommit) {
+            await t.rollback();
+        }
         throw error;
     }
 }
@@ -437,15 +450,22 @@ async function updateLearnedWords(userId, learnedWords) {
                 transaction: t
             });
             
-            // If no existing progress, this is a newly learned word
+            // Count as newly learned if:
+            // 1. No existing progress, OR
+            // 2. Existing progress is only 'shown' (not yet practiced)
             if (!existingProgress) {
                 newlyLearnedCount++;
                 console.log(`  - "${word.swedish}" is NEW (will count toward total)`);
+            } else if (existingProgress.masteryLevel === 'shown') {
+                newlyLearnedCount++;
+                console.log(`  - "${word.swedish}" was shown, now practiced (will count toward total)`);
             } else {
-                console.log(`  - "${word.swedish}" already exists (won't count toward total)`);
+                console.log(`  - "${word.swedish}" already practiced (won't count toward total)`);
             }
             
-            await recordWordProgress(userId, word.id, true);
+            console.log(`    Recording progress for "${word.swedish}"`);
+            await recordWordProgress(userId, word.id, true, t);
+            console.log(`    Progress recorded for "${word.swedish}"`);
         }
 
         console.log(`Total words in session: ${words.length}, Newly learned: ${newlyLearnedCount}`);
@@ -470,7 +490,12 @@ async function updateLearnedWords(userId, learnedWords) {
 
         await t.commit();
     } catch (error) {
-        await t.rollback();
+        console.error('Error in updateLearnedWords transaction:', error);
+        try {
+            await t.rollback();
+        } catch (rollbackError) {
+            console.error('Error rolling back transaction:', rollbackError);
+        }
         throw error;
     }
 }

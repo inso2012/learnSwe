@@ -1,17 +1,29 @@
 require('dotenv').config();
 const { Sequelize, DataTypes } = require('sequelize');
 
-// Connect to PostgreSQL (adjust credentials as needed)
-const sequelize = new Sequelize(
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASS,
-    {
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT, 
-        dialect: 'postgres',
-    }
-);
+// Database configuration - supports both PostgreSQL (production) and SQLite (testing)
+let sequelize;
+
+if (process.env.NODE_ENV === 'test') {
+    // Use SQLite for testing
+    sequelize = new Sequelize({
+        dialect: 'sqlite',
+        storage: process.env.DB_STORAGE || ':memory:',
+        logging: process.env.DB_LOGGING === 'true' ? console.log : false,
+    });
+} else {
+    // Use PostgreSQL for development/production
+    sequelize = new Sequelize(
+        process.env.DB_NAME,
+        process.env.DB_USER,
+        process.env.DB_PASS,
+        {
+            host: process.env.DB_HOST,
+            port: process.env.DB_PORT, 
+            dialect: 'postgres',
+        }
+    );
+}
 
 /**
  * User Model
