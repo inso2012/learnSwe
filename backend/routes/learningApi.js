@@ -5,7 +5,8 @@ const {
     generateVocabularyQuiz,
     getTranslationExercise,
     getWordSuggestions,
-    submitLearningSession
+    submitLearningSession,
+    getWordAlternatives
 } = require('../controllers/learningController');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -50,5 +51,13 @@ router.get('/suggestions', getWordSuggestions);
  * @body    { sessionType, results, timeSpent }
  */
 router.post('/session/submit', submitLearningSession);
+
+/**
+ * @route   GET /api/learning/alternatives
+ * @desc    Get alternative translations for a word
+ * @access  Private
+ * @query   ?word=string&count=number
+ */
+router.get('/alternatives', getWordAlternatives);
 
 module.exports = router;

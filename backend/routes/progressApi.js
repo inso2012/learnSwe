@@ -8,7 +8,8 @@ const {
     finishQuiz,
     practiceWord,
     getWordProgress,
-    getLearningActivity
+    getLearningActivity,
+    updateFlashcardProgress
 } = require('../controllers/progressController');
 const { authenticateToken } = require('../middleware/auth');
 
@@ -77,5 +78,12 @@ router.get('/word/:wordId', getWordProgress);
  * @access  Private
  */
 router.get('/activity', getLearningActivity);
+
+/**
+ * @route   POST /api/progress/flashcards
+ * @desc    Update learned words from flashcard session
+ * @access  Private
+ */
+router.post('/flashcards', updateFlashcardProgress);
 
 module.exports = router;

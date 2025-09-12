@@ -1,8 +1,8 @@
 /* Flashcard specific styles */
 .container {
     max-width: 800px;
-    margin: 2rem auto;
-    padding: 0 1rem;
+    margin: 0 auto 2rem auto;
+    padding: 1rem;
 }
 
 .setup-section {
@@ -10,6 +10,105 @@
     justify-content: center;
     align-items: center;
     min-height: calc(100vh - 200px);
+}
+
+.flashcard-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 2rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.flashcard {
+    width: 100%;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.word-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+}
+
+.answer-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.word-type {
+    font-size: 1rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+}
+
+.word-text {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #1a202c;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.difficulty-badge {
+    font-size: 0.875rem;
+    color: #718096;
+    background: #f7fafc;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    margin-top: 1rem;
+}
+
+.translation {
+    font-size: 2rem;
+    color: #2d3748;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.mastery-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.mastery-level {
+    font-size: 1rem;
+    color: #4a5568;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    background: #ebf8ff;
+}
+
+.success-rate {
+    font-size: 0.875rem;
+    color: #718096;
+}
+
+.card-actions {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
 }
 
 .answer-buttons {

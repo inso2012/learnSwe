@@ -4,7 +4,9 @@ const {
     recordQuizAnswer,
     completeQuizSession,
     getUserStats,
-    getWordsForReview
+    getWordsForReview,
+    updateLearnedWords,
+    markWordsAsShown
 } = require('../models/Progress');
 
 const { UserWordProgress, Word, LearningStreak, sequelize } = require('../db');
@@ -306,6 +308,58 @@ async function getLearningActivity(req, res) {
     }
 }
 
+/**
+ * Update learned words from flashcard session
+ */
+async function updateFlashcardProgress(req, res) {
+    try {
+        const userId = req.userId;
+        const { sessionStats, cards, learnedWords, shownWords } = req.body;
+        
+        console.log('=== FLASHCARD PROGRESS UPDATE ===');
+        console.log('User ID:', userId);
+        console.log('Learned Words:', learnedWords);
+        console.log('Shown Words:', shownWords);
+        console.log('Session Stats:', sessionStats);
+
+        // Validate required data
+        if (!Array.isArray(learnedWords)) {
+            console.log('ERROR: learnedWords is not an array:', learnedWords);
+            return res.status(400).json({
+                success: false,
+                error: 'learnedWords array is required'
+            });
+        }
+
+        // Track all words shown in this session (to prevent them from appearing again)
+        if (shownWords && Array.isArray(shownWords) && shownWords.length > 0) {
+            console.log('Calling markWordsAsShown with:', shownWords.length, 'words');
+            await markWordsAsShown(userId, shownWords);
+            console.log('markWordsAsShown completed');
+        }
+
+        // Update learned words in the database
+        if (learnedWords.length > 0) {
+            console.log('Calling updateLearnedWords with:', learnedWords.length, 'words');
+            await updateLearnedWords(userId, learnedWords);
+            console.log('updateLearnedWords completed');
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Flashcard progress updated successfully',
+            wordsProcessed: learnedWords.length,
+            shownWordsTracked: shownWords ? shownWords.length : 0
+        });
+    } catch (error) {
+        console.error('Error updating flashcard progress:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
 module.exports = {
     getStats,
     getReviewWords,
@@ -314,5 +368,6 @@ module.exports = {
     finishQuiz,
     practiceWord,
     getWordProgress,
-    getLearningActivity
+    getLearningActivity,
+    updateFlashcardProgress
 };

@@ -44,8 +44,8 @@ async function getFlashcards(req, res) {
         const reviewWordsCount = reviewWords.length;
         const remainingSlots = limit - reviewWordsCount;
         
-        // Get new words user hasn't seen yet
-        const learnedWordIds = await UserWordProgress.findAll({
+        // Get words user has already seen (includes shown, learning, practicing, mastered)
+        const seenWordIds = await UserWordProgress.findAll({
             where: { userId },
             attributes: ['wordId'],
             raw: true
@@ -55,7 +55,7 @@ async function getFlashcards(req, res) {
             where: {
                 ...wordFilter,
                 id: {
-                    [Op.notIn]: learnedWordIds.length > 0 ? learnedWordIds : [0]
+                    [Op.notIn]: seenWordIds.length > 0 ? seenWordIds : [0]
                 }
             },
             order: [['difficultyLevel', 'ASC'], ['createdAt', 'ASC']],
@@ -439,10 +439,65 @@ async function submitLearningSession(req, res) {
     }
 }
 
+/**
+ * Get alternative translations for a word
+ * @param {Request} req 
+ * @param {Response} res 
+ */
+async function getWordAlternatives(req, res) {
+    try {
+        const { word, count = 3 } = req.query;
+        
+        if (!word) {
+            return res.status(400).json({
+                success: false,
+                error: 'Word parameter is required'
+            });
+        }
+
+        // Find the original word to get its type
+        const originalWord = await Word.findOne({
+            where: { swedish: word }
+        });
+
+        if (!originalWord) {
+            return res.status(404).json({
+                success: false,
+                error: 'Word not found'
+            });
+        }
+
+        // Get alternative translations (words of the same type)
+        const alternatives = await Word.findAll({
+            where: {
+                id: { [Op.ne]: originalWord.id }, // Not the same word
+                type: originalWord.type, // Same word type
+                english: { [Op.ne]: originalWord.english } // Different translation
+            },
+            order: sequelize.random(),
+            limit: parseInt(count),
+            attributes: ['english']
+        });
+
+        res.status(200).json({
+            success: true,
+            data: alternatives.map(w => w.english)
+        });
+        
+    } catch (error) {
+        console.error('Error getting word alternatives:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
 module.exports = {
     getFlashcards,
     generateVocabularyQuiz,
     getTranslationExercise,
     getWordSuggestions,
-    submitLearningSession
+    submitLearningSession,
+    getWordAlternatives
 };

@@ -1,7 +1,8 @@
 // DOM elements and cache
-let elements = window.dashboardElements;
-if (!elements) {
-    elements = {
+(function() {
+    'use strict';
+    
+    window.dashboardElements = window.dashboardElements || {
         userDisplayName: null,
         memberSince: null,
         wordsLearned: null,
@@ -13,8 +14,8 @@ if (!elements) {
         progressBars: {},
         countDisplays: {}
     };
-    window.dashboardElements = elements;
-}
+    
+    const elements = window.dashboardElements;
 
 // Initialize DOM elements
 function initializeElements() {
@@ -78,8 +79,18 @@ async function loadDashboard() {
 
         if (statsResponse.ok) {
             const statsData = await statsResponse.json();
-            updateWordTypeProgress(statsData.wordTypeStats || {});
-            updateLearningProgress(statsData);
+            console.log('=== DASHBOARD STATS DATA ===');
+            console.log('Raw stats response:', statsData);
+            
+            // Extract the actual stats from the response wrapper
+            const actualStats = statsData.data || statsData;
+            console.log('Actual stats data:', actualStats);
+            console.log('Total words learned from stats:', actualStats.totalWordsLearned);
+            
+            updateWordTypeProgress(actualStats.wordTypeStats || {});
+            updateLearningProgress(actualStats);
+        } else {
+            console.error('Stats API failed:', statsResponse.status, await statsResponse.text());
         }
 
         // Fetch recent learning activity
@@ -102,7 +113,14 @@ async function loadDashboard() {
 }
 
 function updateLearningProgress(stats) {
-    if (elements.wordsLearned) elements.wordsLearned.textContent = stats.totalWordsLearned || 0;
+    console.log('=== UPDATING LEARNING PROGRESS ===');
+    console.log('Stats object:', stats);
+    console.log('Setting words learned to:', stats.totalWordsLearned || 0);
+    
+    if (elements.wordsLearned) {
+        elements.wordsLearned.textContent = stats.totalWordsLearned || 0;
+        console.log('Words learned element updated, now shows:', elements.wordsLearned.textContent);
+    }
     if (elements.currentStreak) elements.currentStreak.textContent = `${stats.currentStreak || 0} days`;
     if (elements.longestStreak) elements.longestStreak.textContent = `${stats.longestStreak || 0} days`;
     if (elements.quizzesTaken) elements.quizzesTaken.textContent = stats.totalQuizzesTaken || 0;
@@ -167,3 +185,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadDashboard();
     }
 });
+
+// Refresh dashboard when user returns to the page (e.g., after completing flashcards)
+window.addEventListener('focus', async () => {
+    if (await window.auth.verifyToken()) {
+        await loadDashboard();
+    }
+});
+
+// Also refresh when page becomes visible (for tab switching)
+document.addEventListener('visibilitychange', async () => {
+    if (!document.hidden && await window.auth.verifyToken()) {
+        await loadDashboard();
+    }
+});
+
+})(); // Close the IIFE

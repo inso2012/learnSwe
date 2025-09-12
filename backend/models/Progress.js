@@ -280,10 +280,9 @@ async function updateUserStreak(userId, transaction) {
  * @returns {Promise<Object>}
  */
 async function getUserStats(userId) {
-    const [user, masteryStats] = await Promise.all([
+    const [user, masteryStats, totalWordsCount] = await Promise.all([
         User.findByPk(userId, {
             attributes: [
-                'totalWordsLearned', 
                 'currentStreak', 
                 'longestStreak', 
                 'totalQuizzesTaken', 
@@ -302,6 +301,12 @@ async function getUserStats(userId) {
             ],
             group: ['masteryLevel'],
             raw: true
+        }),
+        UserWordProgress.count({
+            where: { 
+                userId,
+                masteryLevel: { [Op.in]: ['shown', 'practicing', 'mastered'] }
+            }
         })
     ]);
 
@@ -337,7 +342,7 @@ async function getUserStats(userId) {
     // Format user stats with defaults
     return {
         ...user,
-        totalWordsLearned: user.totalWordsLearned || 0,
+        totalWordsLearned: totalWordsCount || 0,
         currentStreak: user.currentStreak || 0,
         longestStreak: user.longestStreak || 0,
         totalQuizzesTaken: user.totalQuizzesTaken || 0,
@@ -376,6 +381,114 @@ async function getWordsForReview(userId, limit = 20) {
     });
 }
 
+/**
+ * Update learned words from flashcard session
+ * @param {number} userId 
+ * @param {string[]} learnedWords - Array of learned Swedish words
+ * @returns {Promise<void>}
+ */
+async function updateLearnedWords(userId, learnedWords) {
+    // Handle empty arrays
+    if (!learnedWords || learnedWords.length === 0) {
+        return;
+    }
+
+    const t = await sequelize.transaction();
+    
+    try {
+        // Get Word IDs for the learned words
+        const words = await Word.findAll({
+            where: {
+                swedish: {
+                    [Op.in]: learnedWords
+                }
+            },
+            transaction: t
+        });
+
+        // Process each word
+        for (const word of words) {
+            await recordWordProgress(userId, word.id, true);
+        }
+
+        // Update user stats
+        await User.increment('totalWordsLearned', {
+            by: words.length,
+            where: { id: userId },
+            transaction: t
+        });
+
+        // Update learning streak
+        await updateLearningStreak(userId, {
+            wordsLearned: words.length,
+            timeSpent: 0 // We don't track time per word in flashcards
+        }, t);
+
+        await t.commit();
+    } catch (error) {
+        await t.rollback();
+        throw error;
+    }
+}
+
+/**
+ * Mark words as shown to user (to prevent them from appearing again in future sessions)
+ */
+async function markWordsAsShown(userId, shownWords) {
+    // Handle empty arrays
+    if (!shownWords || shownWords.length === 0) {
+        return;
+    }
+
+    const t = await sequelize.transaction();
+    
+    try {
+        // Get Word IDs for the shown words
+        const words = await Word.findAll({
+            where: {
+                swedish: {
+                    [Op.in]: shownWords
+                }
+            },
+            transaction: t
+        });
+
+        // Create or update UserWordProgress records for shown words
+        for (const word of words) {
+            // Check if progress record already exists
+            const existingProgress = await UserWordProgress.findOne({
+                where: {
+                    userId: userId,
+                    wordId: word.id
+                },
+                transaction: t
+            });
+
+            if (!existingProgress) {
+                // Create new progress record marking word as "shown"
+                await UserWordProgress.create({
+                    userId: userId,
+                    wordId: word.id,
+                    masteryLevel: 'shown', // New status to indicate word was shown but not necessarily practiced
+                    correctAttempts: 0,
+                    totalAttempts: 0,
+                    lastReviewDate: new Date(),
+                    nextReviewDate: null, // No need to review "shown" words unless they become active
+                    easeFactor: 2.5,
+                    intervalDays: 0,
+                    reviewCount: 0
+                }, { transaction: t });
+            }
+            // If record exists, we don't need to do anything - word is already tracked
+        }
+
+        await t.commit();
+    } catch (error) {
+        await t.rollback();
+        throw error;
+    }
+}
+
 module.exports = {
     recordWordProgress,
     createQuizSession,
@@ -383,5 +496,7 @@ module.exports = {
     completeQuizSession,
     updateLearningStreak,
     getUserStats,
-    getWordsForReview
+    getWordsForReview,
+    updateLearnedWords,
+    markWordsAsShown
 };

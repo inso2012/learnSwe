@@ -8,8 +8,7 @@ nav {
     z-index: 100;
     backdrop-filter: blur(10px);
     width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
 }
 
 /* User info styles in navigation */

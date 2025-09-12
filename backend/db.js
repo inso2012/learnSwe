@@ -148,7 +148,7 @@ const UserWordProgress = sequelize.define('UserWordProgress', {
         }
     },
     masteryLevel: {
-        type: DataTypes.ENUM('learning', 'practicing', 'mastered'),
+        type: DataTypes.ENUM('shown', 'learning', 'practicing', 'mastered'),
         defaultValue: 'learning'
     },
     correctAttempts: {
