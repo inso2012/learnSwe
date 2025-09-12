@@ -2,6 +2,16 @@
 
 This document explains the refactored project structure for clear separation of concerns.
 
+## 📋 Table of Contents
+
+- [Directory Structure](#directory-structure)
+- [Architecture Principles](#architecture-principles)
+- [Usage Examples](#usage-examples)
+- [Testing](#testing)
+- [Benefits](#benefits-of-this-structure)
+- [Migration Notes](#migration-notes)
+- [Future Enhancements](#future-enhancements)
+
 ## Directory Structure
 
 ```

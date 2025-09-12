@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnSwe Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #006aa7 0%, #fecc00 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #006aa7, #0077bb);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .doc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .doc-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .doc-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #006aa7;
+        }
+        
+        .doc-card h3 {
+            color: #006aa7;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .doc-card p {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        
+        .doc-card .features {
+            list-style: none;
+            margin-bottom: 1rem;
+        }
+        
+        .doc-card .features li {
+            color: #555;
+            margin-bottom: 0.3rem;
+            padding-left: 1rem;
+            position: relative;
+        }
+        
+        .doc-card .features li:before {
+            content: "✓";
+            color: #28a745;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+        
+        .doc-link {
+            display: inline-block;
+            background: #006aa7;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+        
+        .doc-link:hover {
+            background: #0077bb;
+        }
+        
+        .icon {
+            font-size: 1.5rem;
+        }
+        
+        .quick-links {
+            background: #e8f4f8;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .quick-links h2 {
+            color: #006aa7;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .quick-link {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            color: #333;
+            border: 1px solid #ddd;
+            transition: all 0.3s ease;
+        }
+        
+        .quick-link:hover {
+            border-color: #006aa7;
+            transform: translateY(-2px);
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            border-top: 1px solid #e9ecef;
+            margin-top: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .doc-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🇸🇪 LearnSwe Documentation</h1>
+            <p>Comprehensive documentation for the Swedish Language Learning Platform</p>
+        </header>
+        
+        <main class="content">
+            <div class="doc-grid">
+                <div class="doc-card" onclick="location.href='API_REFERENCE.md'">
+                    <h3><span class="icon">🔌</span> API Reference</h3>
+                    <p>Complete REST API documentation with endpoints, request/response formats, and authentication details.</p>
+                    <ul class="features">
+                        <li>User Management APIs</li>
+                        <li>Vocabulary Word APIs</li>
+                        <li>Learning & Progress APIs</li>
+                        <li>Error handling & Rate limiting</li>
+                    </ul>
+                    <a href="API_REFERENCE.md" class="doc-link">View API Docs</a>
+                </div>
+                
+                <div class="doc-card" onclick="location.href='DATABASE_SCHEMA.md'">
+                    <h3><span class="icon">🗄️</span> Database Schema</h3>
+                    <p>Detailed database structure, relationships, and schema documentation for PostgreSQL and SQLite.</p>
+                    <ul class="features">
+                        <li>Entity Relationship Diagrams</li>
+                        <li>Table definitions & constraints</li>
+                        <li>Indexes & optimization</li>
+                        <li>Migration guidelines</li>
+                    </ul>
+                    <a href="DATABASE_SCHEMA.md" class="doc-link">View Schema</a>
+                </div>
+                
+                <div class="doc-card" onclick="location.href='FRONTEND_GUIDE.md'">
+                    <h3><span class="icon">💻</span> Frontend Guide</h3>
+                    <p>Frontend development guide covering architecture, components, and JavaScript modules.</p>
+                    <ul class="features">
+                        <li>Component architecture</li>
+                        <li>Authentication flow</li>
+                        <li>UI components & state management</li>
+                        <li>Testing & accessibility</li>
+                    </ul>
+                    <a href="FRONTEND_GUIDE.md" class="doc-link">View Guide</a>
+                </div>
+                
+                <div class="doc-card" onclick="location.href='PROJECT_STRUCTURE.md'">
+                    <h3><span class="icon">🏗️</span> Project Structure</h3>
+                    <p>Understanding the refactored project architecture and separation of concerns.</p>
+                    <ul class="features">
+                        <li>Directory organization</li>
+                        <li>Shared utilities & constants</li>
+                        <li>Testing structure</li>
+                        <li>Migration benefits</li>
+                    </ul>
+                    <a href="PROJECT_STRUCTURE.md" class="doc-link">View Structure</a>
+                </div>
+                
+                <div class="doc-card" onclick="location.href='DEPLOYMENT_GUIDE.md'">
+                    <h3><span class="icon">🚀</span> Deployment Guide</h3>
+                    <p>Complete deployment instructions for development, staging, and production environments.</p>
+                    <ul class="features">
+                        <li>Local development setup</li>
+                        <li>Production deployment with PM2</li>
+                        <li>Docker containerization</li>
+                        <li>Monitoring & troubleshooting</li>
+                    </ul>
+                    <a href="DEPLOYMENT_GUIDE.md" class="doc-link">View Deployment</a>
+                </div>
+                
+                <div class="doc-card" onclick="location.href='../README.md'">
+                    <h3><span class="icon">📖</span> Getting Started</h3>
+                    <p>Quick start guide with project overview, installation instructions, and basic usage.</p>
+                    <ul class="features">
+                        <li>Project overview & features</li>
+                        <li>Quick installation steps</li>
+                        <li>Architecture principles</li>
+                        <li>Contributing guidelines</li>
+                    </ul>
+                    <a href="../README.md" class="doc-link">Get Started</a>
+                </div>
+            </div>
+            
+            <div class="quick-links">
+                <h2>Quick Navigation</h2>
+                <div class="links-grid">
+                    <a href="../frontend/index.html" class="quick-link">
+                        <strong>🏠 Application</strong><br>
+                        <small>Open the app</small>
+                    </a>
+                    <a href="../backend/tests/" class="quick-link">
+                        <strong>🧪 Tests</strong><br>
+                        <small>View test files</small>
+                    </a>
+                    <a href="../shared/" class="quick-link">
+                        <strong>🔧 Utilities</strong><br>
+                        <small>Shared code</small>
+                    </a>
+                    <a href="https://github.com/inso2012/learnSwe" class="quick-link">
+                        <strong>📦 Repository</strong><br>
+                        <small>GitHub repo</small>
+                    </a>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <p>
+                <strong>LearnSwe</strong> - Swedish Language Learning Platform<br>
+                <small>Built with ❤️ for language learners</small>
+            </p>
+        </footer>
+    </div>
+    
+    <script>
+        // Add keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                window.history.back();
+            }
+        });
+        
+        // Add smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // Add loading animation for external links
+        document.querySelectorAll('.doc-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                this.innerHTML = 'Loading...';
+                this.style.opacity = '0.7';
+            });
+        });
+    </script>
+</body>
+</html>
