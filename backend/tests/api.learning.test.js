@@ -4,9 +4,9 @@
 
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
-const app = require('../backend/app');
+const app = require('../app');
 const { setupTestDatabase, cleanupTestDatabase, createTestUser, clearTestData } = require('./helpers/database');
-const { Word } = require('../backend/db');
+const { Word } = require('../db');
 
 describe('Learning API', () => {
   let testUser;

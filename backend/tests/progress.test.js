@@ -2,8 +2,8 @@
  * Tests for Progress model - Word counting and learning logic
  */
 
-const { updateLearnedWords, getUserStats } = require('../backend/models/Progress');
-const { User } = require('../backend/db');
+const { updateLearnedWords, getUserStats } = require('../models/Progress');
+const { User } = require('../db');
 const { setupTestDatabase, cleanupTestDatabase, createTestUser, clearUserProgress, getTestWords } = require('./helpers/database');
 
 describe('Progress Model - Word Counting', () => {

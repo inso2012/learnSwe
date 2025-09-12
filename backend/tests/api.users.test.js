@@ -3,8 +3,8 @@
  */
 
 const request = require('supertest');
-const app = require('../backend/app');
-const { User } = require('../backend/db');
+const app = require('../app');
+const { User } = require('../db');
 const { setupTestDatabase, cleanupTestDatabase, createTestUser } = require('./helpers/database');
 
 describe('User Authentication', () => {

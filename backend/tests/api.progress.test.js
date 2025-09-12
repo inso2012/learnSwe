@@ -4,8 +4,8 @@
 
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
-const app = require('../backend/app');
-const { Word } = require('../backend/db');
+const app = require('../app');
+const { Word } = require('../db');
 const { setupTestDatabase, cleanupTestDatabase, clearTestData, createTestUser, getTestWords } = require('./helpers/database');
 
 describe('Progress API', () => {

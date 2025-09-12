@@ -2,7 +2,7 @@
  * Database test helpers and utilities
  */
 
-const { sequelize, User, Word, UserWordProgress } = require('../../backend/db');
+const { sequelize, User, Word, UserWordProgress } = require('../../db');
 
 /**
  * Setup test database - create tables and seed basic data
