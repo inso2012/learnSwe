@@ -352,6 +352,17 @@ class FlashcardLearning {
         const card = this.currentCards[this.currentCardIndex];
         if (!card) return;
 
+        // Reset answer state for new card
+        this.isAnswerShown = false;
+        
+        // Reset UI elements
+        const flashcard = document.querySelector('.flashcard');
+        const cardBack = document.querySelector('.card-back');
+        if (flashcard) flashcard.classList.remove('flipped');
+        if (cardBack) cardBack.classList.add('hidden');
+        if (this.showAnswerBtn) this.showAnswerBtn.classList.remove('hidden');
+        if (this.answerButtons) this.answerButtons.classList.add('hidden');
+
         // Update word information
         if (this.wordType) this.wordType.textContent = card.type || 'word';
         if (this.wordText) this.wordText.textContent = card.swedish;
@@ -403,10 +414,8 @@ class FlashcardLearning {
         // Get current card before moving to next
         const currentCard = this.currentCards[this.currentCardIndex];
         
-        // Add to learned words if the user has seen the answer
-        if (this.isAnswerShown) {
-            this.learnedWords.add(currentCard.swedish);
-        }
+        // Note: learnedWords is only populated when user answers correctly (see handleAnswerClick)
+        // Don't add to learnedWords here - that happens only on correct answers
 
         if (this.currentCardIndex < this.currentCards.length - 1) {
             console.log('Moving to next card...');
@@ -526,8 +535,10 @@ class FlashcardLearning {
         if (isCorrect) {
             this.sessionStats.correct++;
             this.learnedWords.add(currentCard.swedish);
+            console.log(`Added "${currentCard.swedish}" to learned words. Total learned: ${this.learnedWords.size}`);
         } else {
             this.sessionStats.incorrect++;
+            console.log(`Incorrect answer for "${currentCard.swedish}". Not added to learned words.`);
         }
         
         // Always track words as "shown" regardless of correctness (for dashboard counting)
@@ -630,17 +641,40 @@ class FlashcardLearning {
         this.showLoading(true);
         try {
             // Send session results, shown words, and learned words to server
-            const shownWords = this.currentCards.map(card => card.swedish);
+            // Only include cards that were actually shown (up to current index + 1)
+            const actuallyShownCards = this.currentCards.slice(0, this.currentCardIndex + 1);
+            const shownWords = actuallyShownCards.map(card => card.swedish);
+            
+            // Validation: Ensure data integrity
+            if (this.learnedWords.size > actuallyShownCards.length) {
+                console.error('ERROR: More learned words than shown cards!');
+                console.error('Learned words:', this.learnedWords.size);
+                console.error('Actually shown cards:', actuallyShownCards.length);
+                throw new Error('Data integrity error: Cannot have more learned words than shown cards');
+            }
+            
             const payload = {
                 sessionStats: this.sessionStats,
-                cards: this.currentCards,
+                cards: actuallyShownCards,  // Only cards that were actually shown
                 learnedWords: Array.from(this.learnedWords),
-                shownWords: shownWords  // Track all words shown in this session
+                shownWords: shownWords  // Track only words actually shown in this session
             };
             
-            console.log('Sending flashcard session data:', payload);
-            console.log('Learned words:', Array.from(this.learnedWords));
-            console.log('Shown words:', shownWords);
+            console.log('=== SESSION COMPLETION DATA ===');
+            console.log('Total cards loaded:', this.currentCards.length);
+            console.log('Current card index:', this.currentCardIndex);
+            console.log('Cards actually shown:', actuallyShownCards.length);
+            console.log('Learned words count:', this.learnedWords.size);
+            console.log('Session correct answers:', this.sessionStats.correct);
+            
+            // Validation: learned words should equal correct answers
+            if (this.learnedWords.size !== this.sessionStats.correct) {
+                console.warn('WARNING: Learned words count does not match correct answers count!');
+                console.warn('Learned words:', Array.from(this.learnedWords));
+                console.warn('Correct results:', this.sessionStats.results.filter(r => r.correct).map(r => r.word));
+            }
+            
+            console.log('Payload being sent:', JSON.stringify(payload, null, 2));
             
             const response = await fetch('/api/progress/flashcards', {
                 method: 'POST',

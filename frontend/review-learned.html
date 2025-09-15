@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Swedish - Review Learned Words</title>
+    <style>
+        html {
+            background: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100%;
+        }
+        body {
+            opacity: 0;
+        }
+    </style>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/nav.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/review-learned.css">
+    <script src="js/utility.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/nav.js" defer></script>
+    <script src="js/modal.js" defer></script>
+    <script src="js/review-learned.js" defer></script>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <h1>Learn Swedish</h1>
+            <div class="nav-links">
+                <a href="dashboard.html">Dashboard</a>
+                <a href="words.html">Words</a>
+                <a href="flashcards.html">Practice</a>
+                <a href="quiz.html">Quiz</a>
+                <a href="grammar.html">Grammar</a>
+            </div>
+            <div class="user-info">
+                <span id="username" class="user-email"></span>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <div class="dashboard-container">
+            <div class="review-header">
+                <button class="back-btn" onclick="goBackToDashboard()">
+                    ← Back to Dashboard
+                </button>
+                <h2>Review Your Learned Words</h2>
+                <p>Words you've successfully practiced and mastered</p>
+            </div>
+
+            <div class="learned-words-container">
+                <div class="learned-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Learned:</span>
+                        <span class="stat-value" id="totalLearned">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Mastered:</span>
+                        <span class="stat-value" id="masteredCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">In Progress:</span>
+                        <span class="stat-value" id="practicingCount">0</span>
+                    </div>
+                </div>
+
+                <div class="learned-controls">
+                    <div class="filter-search-container">
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="Search words..." class="search-input">
+                            <button class="search-clear" id="clearSearch">✕</button>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="typeFilter">Filter by type:</label>
+                            <select id="typeFilter" class="filter-select">
+                                <option value="all">All Types</option>
+                                <option value="noun">Nouns</option>
+                                <option value="verb">Verbs</option>
+                                <option value="adjective">Adjectives</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="masteryFilter">Filter by mastery:</label>
+                            <select id="masteryFilter" class="filter-select">
+                                <option value="all">All Levels</option>
+                                <option value="mastered">Mastered</option>
+                                <option value="practicing">Practicing</option>
+                                <option value="shown">Seen</option>
+                            </select>
+                        </div>
+
+                        <div class="sort-group">
+                            <label for="sortBy">Sort by:</label>
+                            <select id="sortBy" class="sort-select">
+                                <option value="createdAt">Date Learned</option>
+                                <option value="word">Alphabetical</option>
+                                <option value="masteryLevel">Mastery Level</option>
+                                <option value="correctAttempts">Success Rate</option>
+                            </select>
+                            <button id="sortOrder" class="sort-order-btn" title="Toggle sort order">↓</button>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="action-btn practice-btn" onclick="practiceSelectedWords()" disabled>
+                            📚 Practice Selected
+                        </button>
+                        <button class="action-btn export-btn" onclick="exportWords()">
+                            📄 Export List
+                        </button>
+                        <button class="action-btn" onclick="debugDatabase()" style="background: #FF5722;">
+                            🔍 Debug DB
+                        </button>
+                    </div>
+                </div>
+
+                <div class="words-grid" id="wordsGrid">
+                    <div class="loading-message">
+                        Loading your learned words...
+                    </div>
+                </div>
+
+                <div class="pagination-container" id="paginationContainer" style="display: none;">
+                    <button class="pagination-btn" id="prevBtn" onclick="previousPage()">Previous</button>
+                    <div class="pagination-info">
+                        <span id="pageInfo">Page 1 of 1</span>
+                        <span id="totalInfo">(0 words total)</span>
+                    </div>
+                    <button class="pagination-btn" id="nextBtn" onclick="nextPage()">Next</button>
+                </div>
+
+                <div class="no-words-message hidden" id="noWordsMessage">
+                    <div class="info-icon">📖</div>
+                    <h3>No learned words found!</h3>
+                    <p>Start learning words to see them here. Practice with flashcards or take quizzes to build your vocabulary.</p>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="window.location.href = 'flashcards.html'">
+                            Start Learning
+                        </button>
+                        <button class="action-btn secondary" onclick="goBackToDashboard()">
+                            Back to Dashboard
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

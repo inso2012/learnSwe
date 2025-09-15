@@ -17,13 +17,13 @@ const { Op } = require('sequelize');
  * @returns {Promise<Object>}
  */
 async function recordWordProgress(userId, wordId, isCorrect, transaction = null) {
-    console.log(`    recordWordProgress: Starting for userId=${userId}, wordId=${wordId}`);
+    // console.log(`    recordWordProgress: Starting for userId=${userId}, wordId=${wordId}`);
     const t = transaction || await sequelize.transaction();
     const shouldCommit = !transaction; // Only commit if we created the transaction
     
     try {
         // Find or create user word progress record
-        console.log(`    recordWordProgress: About to findOrCreate`);
+        // console.log(`    recordWordProgress: About to findOrCreate`);
         let [progress] = await UserWordProgress.findOrCreate({
             where: { userId, wordId },
             defaults: {
@@ -37,7 +37,7 @@ async function recordWordProgress(userId, wordId, isCorrect, transaction = null)
             },
             transaction: t
         });
-        console.log(`    recordWordProgress: findOrCreate completed, masteryLevel: ${progress.masteryLevel}`);
+        // console.log(`    recordWordProgress: findOrCreate completed, masteryLevel: ${progress.masteryLevel}`);
 
         // Update progress
         progress.totalAttempts += 1;
@@ -74,16 +74,16 @@ async function recordWordProgress(userId, wordId, isCorrect, transaction = null)
         // to avoid double counting when multiple words are learned in a session
         
         if (shouldCommit) {
-            console.log(`    recordWordProgress: About to commit transaction`);
+            // console.log(`    recordWordProgress: About to commit transaction`);
             await t.commit();
-            console.log(`    recordWordProgress: Transaction committed successfully`);
+            // console.log(`    recordWordProgress: Transaction committed successfully`);
         } else {
-            console.log(`    recordWordProgress: Using existing transaction, not committing`);
+            // console.log(`    recordWordProgress: Using existing transaction, not committing`);
         }
         return progress;
         
     } catch (error) {
-        console.error(`    recordWordProgress: Error occurred:`, error);
+        // console.error(`    recordWordProgress: Error occurred:`, error);
         if (shouldCommit) {
             await t.rollback();
         }
@@ -309,17 +309,17 @@ async function getUserStats(userId) {
         })
     ]);
     
-    console.log('=== GET USER STATS DEBUG ===');
-    console.log('User ID:', userId);
-    console.log('Total words count from query:', totalWordsCount);
-    console.log('User stored totalWordsLearned:', user?.totalWordsLearned);
+    // console.log('=== GET USER STATS DEBUG ===');
+    // console.log('User ID:', userId);
+    // console.log('Total words count from query:', totalWordsCount);
+    // console.log('User stored totalWordsLearned:', user?.totalWordsLearned);
     
     // Calculate the true total words learned (use the maximum of stored value and progress count)
     const actualTotalWordsLearned = Math.max(
         user?.totalWordsLearned || 0,
         totalWordsCount || 0
     );
-    console.log('Calculated actual total:', actualTotalWordsLearned);
+    // console.log('Calculated actual total:', actualTotalWordsLearned);
     
     // Debug: Get actual records to see what exists
     const debugRecords = await UserWordProgress.findAll({
@@ -336,11 +336,11 @@ async function getUserStats(userId) {
         order: [['createdAt', 'DESC']],
         limit: 20
     });
-    console.log('Recent progress records:', debugRecords.map(r => ({
-        word: r.word?.swedish,
-        masteryLevel: r.masteryLevel,
-        created: r.createdAt
-    })));
+    // console.log('Recent progress records:', debugRecords.map(r => ({
+    //     word: r.word?.swedish,
+    //     masteryLevel: r.masteryLevel,
+    //     created: r.createdAt
+    // })));
     
     if (!user) {
         throw new Error('User not found');
@@ -425,13 +425,15 @@ async function updateLearnedWords(userId, learnedWords) {
     const t = await sequelize.transaction();
     
     try {
-        // Get Word IDs for the learned words
+        // Get Word IDs for the learned words (deduplicate by swedish word)
         const words = await Word.findAll({
             where: {
                 swedish: {
                     [Op.in]: learnedWords
                 }
             },
+            attributes: ['id', 'swedish', 'english', 'type'],
+            group: ['swedish', 'id', 'english', 'type'], // Group by swedish to avoid duplicates
             transaction: t
         });
 
@@ -506,21 +508,32 @@ async function updateLearnedWords(userId, learnedWords) {
 async function markWordsAsShown(userId, shownWords) {
     // Handle empty arrays
     if (!shownWords || shownWords.length === 0) {
+        console.log('markWordsAsShown: No words to process');
         return;
     }
+
+    console.log(`markWordsAsShown: Processing ${shownWords.length} words for user ${userId}`);
+    console.log('markWordsAsShown: Words to mark as shown:', shownWords);
 
     const t = await sequelize.transaction();
     
     try {
-        // Get Word IDs for the shown words
+        // Get Word IDs for the shown words (deduplicate by swedish word)
         const words = await Word.findAll({
             where: {
                 swedish: {
                     [Op.in]: shownWords
                 }
             },
+            attributes: ['id', 'swedish', 'english', 'type'],
+            group: ['swedish', 'id', 'english', 'type'], // Group by swedish to avoid duplicates
             transaction: t
         });
+
+        console.log(`markWordsAsShown: Found ${words.length} words in database`);
+
+        let newRecordsCreated = 0;
+        let existingRecordsFound = 0;
 
         // Create or update UserWordProgress records for shown words
         for (const word of words) {
@@ -547,9 +560,15 @@ async function markWordsAsShown(userId, shownWords) {
                     intervalDays: 0,
                     reviewCount: 0
                 }, { transaction: t });
+                newRecordsCreated++;
+                console.log(`markWordsAsShown: Created new record for "${word.swedish}"`);
+            } else {
+                existingRecordsFound++;
+                console.log(`markWordsAsShown: Record already exists for "${word.swedish}" with masteryLevel: ${existingProgress.masteryLevel}`);
             }
-            // If record exists, we don't need to do anything - word is already tracked
         }
+
+        console.log(`markWordsAsShown: Summary - New records created: ${newRecordsCreated}, Existing records: ${existingRecordsFound}`);
 
         await t.commit();
     } catch (error) {

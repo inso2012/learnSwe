@@ -9,7 +9,7 @@ const {
     markWordsAsShown
 } = require('../models/Progress');
 
-const { UserWordProgress, Word, LearningStreak, sequelize } = require('../db');
+const { UserWordProgress, Word, LearningStreak, User, sequelize } = require('../db');
 const { Op } = require('sequelize');
 
 /**
@@ -315,7 +315,7 @@ async function updateFlashcardProgress(req, res) {
         const userId = req.userId;
         const { sessionStats, cards, learnedWords, shownWords } = req.body;
         
-        console.log('=== FLASHCARD PROGRESS UPDATE ===');
+        console.log('=== FLASHCARD PROGRESS UPDATE DEBUG ===');
         console.log('User ID:', userId);
         console.log('Learned Words:', learnedWords);
         console.log('Shown Words:', shownWords);
@@ -323,12 +323,18 @@ async function updateFlashcardProgress(req, res) {
 
         // Validate required data
         if (!Array.isArray(learnedWords)) {
-            console.log('ERROR: learnedWords is not an array:', learnedWords);
+            // console.log('ERROR: learnedWords is not an array:', learnedWords);
             return res.status(400).json({
                 success: false,
                 error: 'learnedWords array is required'
             });
         }
+
+        // Get BEFORE state
+        const beforeUser = await User.findByPk(userId);
+        const beforeProgressCount = await UserWordProgress.count({ where: { userId } });
+        console.log('BEFORE processing - User totalWordsLearned:', beforeUser?.totalWordsLearned);
+        console.log('BEFORE processing - Total progress records:', beforeProgressCount);
 
         // Track all words shown in this session (to prevent them from appearing again)
         if (shownWords && Array.isArray(shownWords) && shownWords.length > 0) {
@@ -336,6 +342,12 @@ async function updateFlashcardProgress(req, res) {
             await markWordsAsShown(userId, shownWords);
             console.log('markWordsAsShown completed');
         }
+
+        // Get AFTER markWordsAsShown state
+        const afterMarkingUser = await User.findByPk(userId);
+        const afterMarkingProgressCount = await UserWordProgress.count({ where: { userId } });
+        console.log('AFTER markWordsAsShown - User totalWordsLearned:', afterMarkingUser?.totalWordsLearned);
+        console.log('AFTER markWordsAsShown - Total progress records:', afterMarkingProgressCount);
 
         // Update learned words in the database
         if (learnedWords.length > 0) {
