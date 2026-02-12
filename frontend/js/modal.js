@@ -11,7 +11,6 @@ class UniversalModal {
     }
 
     init() {
-        // Create modal HTML if it doesn't exist
         if (!document.getElementById('universalModal')) {
             this.createModalHTML();
         }
@@ -23,7 +22,7 @@ class UniversalModal {
         const modalHTML = `
             <div id="universalModal" class="universal-modal-overlay hidden">
                 <div class="universal-modal-content">
-                    <div class="universal-modal-icon" id="modalIcon">ℹ️</div>
+                    <div class="universal-modal-icon" id="modalIcon"></div>
                     <h3 id="modalTitle">Information</h3>
                     <p id="modalMessage">Message content</p>
                     <div class="universal-modal-actions">
@@ -39,21 +38,18 @@ class UniversalModal {
     setupEventListeners() {
         if (!this.modal) return;
 
-        // Close modal when clicking outside
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) {
                 this.close();
             }
         });
 
-        // Close with Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !this.modal.classList.contains('hidden')) {
                 this.close();
             }
         });
 
-        // Primary button click
         const primaryBtn = document.getElementById('modalPrimaryBtn');
         if (primaryBtn) {
             primaryBtn.addEventListener('click', () => {
@@ -64,7 +60,6 @@ class UniversalModal {
             });
         }
 
-        // Secondary button click
         const secondaryBtn = document.getElementById('modalSecondaryBtn');
         if (secondaryBtn) {
             secondaryBtn.addEventListener('click', () => {
@@ -80,8 +75,8 @@ class UniversalModal {
         const {
             title = 'Information',
             message = '',
-            icon = 'ℹ️',
-            type = 'info', // 'info', 'warning', 'error', 'success', 'confirm'
+            icon = '',
+            type = 'info',
             primaryText = 'OK',
             secondaryText = 'Cancel',
             showSecondary = false,
@@ -90,24 +85,22 @@ class UniversalModal {
 
         this.currentCallback = callback;
 
-        // Update content
         document.getElementById('modalIcon').textContent = this.getIcon(type, icon);
         document.getElementById('modalTitle').textContent = title;
         document.getElementById('modalMessage').textContent = message;
-        
+
         const primaryBtn = document.getElementById('modalPrimaryBtn');
         const secondaryBtn = document.getElementById('modalSecondaryBtn');
-        
+
         if (primaryBtn) {
             primaryBtn.textContent = primaryText;
         }
-        
+
         if (secondaryBtn) {
             secondaryBtn.textContent = secondaryText;
             secondaryBtn.classList.toggle('hidden', !showSecondary);
         }
 
-        // Show modal
         this.modal.classList.remove('hidden');
     }
 
@@ -119,82 +112,57 @@ class UniversalModal {
     }
 
     getIcon(type, customIcon) {
-        if (customIcon && customIcon !== 'ℹ️') return customIcon;
-        
+        if (customIcon) return customIcon;
+
         const icons = {
-            info: 'ℹ️',
-            warning: '⚠️',
-            error: '❌',
-            success: '✅',
-            confirm: '❓'
+            info: 'i',
+            warning: '!',
+            error: 'X',
+            success: 'OK',
+            confirm: '?'
         };
-        
-        return icons[type] || 'ℹ️';
+
+        return icons[type] || 'i';
     }
 }
 
 // Create global instance
 const universalModal = new UniversalModal();
 
-// Convenience functions for different modal types
-function showAlert(message, title = 'Alert', callback = null) {
-    universalModal.show({
-        title,
-        message,
-        type: 'warning',
-        callback
-    });
+// Export convenience functions
+export function showAlert(message, title = 'Alert', callback = null) {
+    universalModal.show({ title, message, type: 'warning', callback });
 }
 
-function showInfo(message, title = 'Information', callback = null) {
-    universalModal.show({
-        title,
-        message,
-        type: 'info',
-        callback
-    });
+export function showInfo(message, title = 'Information', callback = null) {
+    universalModal.show({ title, message, type: 'info', callback });
 }
 
-function showError(message, title = 'Error', callback = null) {
-    universalModal.show({
-        title,
-        message,
-        type: 'error',
-        callback
-    });
+export function showError(message, title = 'Error', callback = null) {
+    universalModal.show({ title, message, type: 'error', callback });
 }
 
-function showSuccess(message, title = 'Success', callback = null) {
-    universalModal.show({
-        title,
-        message,
-        type: 'success',
-        callback
-    });
+export function showSuccess(message, title = 'Success', callback = null) {
+    universalModal.show({ title, message, type: 'success', callback });
 }
 
-function showConfirm(message, title = 'Confirm', callback = null) {
-    universalModal.show({
-        title,
-        message,
-        type: 'confirm',
-        showSecondary: true,
-        primaryText: 'Yes',
-        secondaryText: 'No',
-        callback
-    });
+export function showConfirm(message, title = 'Confirm', callback = null) {
+    universalModal.show({ title, message, type: 'confirm', showSecondary: true, primaryText: 'Yes', secondaryText: 'No', callback });
 }
 
-// Legacy functions for backward compatibility
-function showModal(title, message, callback = null) {
-    universalModal.show({
-        title,
-        message,
-        type: 'info',
-        callback
-    });
+export function showModal(title, message, callback = null) {
+    universalModal.show({ title, message, type: 'info', callback });
 }
 
-function closeModal() {
+export function closeModal() {
     universalModal.close();
 }
+
+// Keep globals for backward compat (used by inline HTML onclick handlers etc.)
+window.showAlert = showAlert;
+window.showError = showError;
+window.showInfo = showInfo;
+window.showSuccess = showSuccess;
+window.showConfirm = showConfirm;
+window.showModal = showModal;
+window.closeModal = closeModal;

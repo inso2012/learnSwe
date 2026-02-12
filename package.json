@@ -1,43 +1,29 @@
 {
   "name": "learnswe",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "private": true,
   "description": "A comprehensive Swedish language learning platform with flashcard functionality, progress tracking, and interactive learning features",
-  "main": "backend/app.js",
+  "workspaces": [
+    "worker",
+    "frontend"
+  ],
   "scripts": {
-    "start": "node backend/app.js",
-    "dev": "nodemon backend/app.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:backend": "jest backend/tests/",
-    "test:frontend": "jest frontend/tests/",
-    "docs:serve": "python -m http.server 8000",
-    "docs:generate": "echo 'Documentation generated in /docs folder'"
-  },
-  "dependencies": {
-    "axios": "^1.11.0",
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.1",
-    "ordbok": "^3.0.0",
-    "pg": "^8.11.1",
-    "pg-hstore": "^2.3.4",
-    "sequelize": "^6.32.1",
-    "xml2js": "^0.6.2"
-  },
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "nodemon": "^3.0.1",
-    "sqlite3": "^5.1.7",
-    "supertest": "^6.3.3"
+    "dev": "npm run dev:worker & npm run dev:frontend",
+    "dev:worker": "npm run dev -w worker",
+    "dev:frontend": "npm run dev -w frontend",
+    "build": "npm run build -w frontend",
+    "deploy:worker": "npm run deploy -w worker",
+    "deploy:frontend": "npm run deploy -w frontend",
+    "db:migrate": "npm run db:migrate -w worker",
+    "db:seed": "npm run db:seed -w worker",
+    "db:setup": "npm run db:migrate && npm run db:seed"
   },
   "keywords": [
     "swedish",
     "learning",
     "language",
-    "education"
+    "education",
+    "cloudflare"
   ],
   "author": "RANovaX",
   "license": "MIT"

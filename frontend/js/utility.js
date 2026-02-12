@@ -1,17 +1,17 @@
 // Utility functions for the Swedish Learning app
-function formatDate(date) {
+export function formatDate(date) {
     return new Date(date).toLocaleDateString();
 }
 
-function capitalizeFirstLetter(string) {
+export function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-function calculateProgress(current, total) {
+export function calculateProgress(current, total) {
     return Math.min((current / total) * 100, 100);
 }
 
-function showError(message, container) {
+export function showError(message, container) {
     if (!container) return;
 
     let errorDiv = document.getElementById('errorMessage');
@@ -21,7 +21,7 @@ function showError(message, container) {
         errorDiv.className = 'error-message';
         container.prepend(errorDiv);
     }
-    
+
     errorDiv.textContent = message;
 }
 
@@ -29,6 +29,8 @@ function showError(message, container) {
 document.addEventListener('DOMContentLoaded', () => {
     const navLinks = document.querySelectorAll('nav a');
     navLinks.forEach(link => {
-        link.addEventListener('click', window.auth.handleNavigation);
+        if (window.auth) {
+            link.addEventListener('click', window.auth.handleNavigation);
+        }
     });
 });

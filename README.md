@@ -189,3 +189,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [API Reference](./docs/API_REFERENCE.md)
 - [Database Schema](./docs/DATABASE_SCHEMA.md)
 - [Frontend Guide](./docs/FRONTEND_GUIDE.md)
+
+## Deploy
+# 1. Create D1 database
+cd worker && npx wrangler d1 create learnswe-db
+# 2. Update wrangler.toml with the database ID
+# 3. Run migrations
+npm run db:setup
+# 4. Set JWT secret
+npx wrangler secret put JWT_SECRET
+# 5. Deploy
+npm run deploy:worker -w worker
+npm run deploy -w frontend
+
+http://localhost:5173
+The Vite dev server (port 5173) serves the frontend
+It automatically proxies /api/* requests to the Wrangler worker (port 8787)
+
