@@ -2,6 +2,7 @@
 import { apiFetch } from './api.js';
 import { checkAuth } from './auth.js';
 import { showAlert } from './modal.js';
+import { createAudioButton } from './audio.js';
 import './nav.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -194,6 +195,10 @@ class SwedishQuiz {
         this.wordTypeBadge.textContent = question.wordType;
         this.difficultyBadge.textContent = `Level ${question.difficulty}`;
         this.questionText.textContent = question.question;
+        if (question.audioUrl && question.type === 'swedish-to-english') {
+            const audioBtn = createAudioButton(question.audioUrl);
+            if (audioBtn) this.questionText.appendChild(audioBtn);
+        }
 
         const progress = ((this.currentQuestionIndex + 1) / this.currentQuiz.questions.length) * 100;
         this.progressFill.style.width = `${progress}%`;

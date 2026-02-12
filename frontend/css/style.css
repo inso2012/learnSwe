@@ -1214,3 +1214,41 @@ nav {
 .universal-modal-btn.hidden {
     display: none;
 }
+
+/* Audio Pronunciation Button */
+.audio-btn {
+    display: inline-block;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.6em;
+    padding: 2px 4px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    vertical-align: middle;
+    line-height: 1;
+    opacity: 0.7;
+    margin-left: 6px;
+}
+
+.audio-btn:hover {
+    opacity: 1;
+    background: rgba(102, 126, 234, 0.15);
+    transform: scale(1.15);
+}
+
+.audio-btn.audio-playing {
+    opacity: 1;
+    animation: audioPulse 0.6s ease-in-out;
+}
+
+@keyframes audioPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.25); }
+}
+
+/* Slightly larger audio button in tables and word cards */
+td .audio-btn,
+.swedish-word .audio-btn {
+    font-size: 1em;
+}

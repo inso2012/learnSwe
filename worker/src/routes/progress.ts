@@ -198,6 +198,104 @@ progressRoutes.get('/word/:wordId', async (c) => {
   }
 });
 
+// GET /api/progress/learned-words
+progressRoutes.get('/learned-words', async (c) => {
+  try {
+    const userId = c.get('userId');
+    const page = parseInt(c.req.query('page') || '1');
+    const limit = parseInt(c.req.query('limit') || '12');
+    const sortBy = c.req.query('sortBy') || 'createdAt';
+    const sortOrder = c.req.query('sortOrder') === 'ASC' ? 'ASC' : 'DESC';
+    const filterBy = c.req.query('filterBy') || 'all';
+    const offset = (page - 1) * limit;
+
+    // Build filter clause
+    let filterClause = '';
+    const filterBindings: any[] = [userId];
+    if (filterBy && filterBy !== 'all') {
+      filterClause = ' AND w.type = ?';
+      filterBindings.push(filterBy);
+    }
+
+    // Count total
+    const countResult = await c.env.DB
+      .prepare(
+        `SELECT COUNT(*) as total
+         FROM user_word_progress uwp
+         JOIN words w ON uwp.wordId = w.id
+         WHERE uwp.userId = ? AND uwp.masteryLevel IN ('practicing', 'mastered', 'shown')${filterClause}`
+      )
+      .bind(...filterBindings)
+      .first<{ total: number }>();
+
+    const totalCount = countResult?.total || 0;
+
+    // Validate sort column
+    const validSortColumns: Record<string, string> = {
+      createdAt: 'uwp.createdAt',
+      swedish: 'w.swedish',
+      english: 'w.english',
+      successRate: 'uwp.successRate',
+      masteryLevel: 'uwp.masteryLevel',
+    };
+    const sortColumn = validSortColumns[sortBy] || 'uwp.createdAt';
+
+    // Fetch words with progress
+    const queryBindings = [...filterBindings, limit, offset];
+    const { results } = await c.env.DB
+      .prepare(
+        `SELECT uwp.wordId, uwp.masteryLevel, uwp.successRate, uwp.totalAttempts,
+                uwp.correctAttempts, uwp.lastReviewedAt, uwp.createdAt as progressCreatedAt,
+                w.id as wId, w.swedish, w.english, w.type, w.difficultyLevel,
+                w.audioUrl, w.examples
+         FROM user_word_progress uwp
+         JOIN words w ON uwp.wordId = w.id
+         WHERE uwp.userId = ? AND uwp.masteryLevel IN ('practicing', 'mastered', 'shown')${filterClause}
+         ORDER BY ${sortColumn} ${sortOrder}
+         LIMIT ? OFFSET ?`
+      )
+      .bind(...queryBindings)
+      .all();
+
+    const words = results.map((row: any) => {
+      // Parse first example if available
+      let example = null;
+      if (row.examples) {
+        try {
+          const examples = JSON.parse(row.examples);
+          if (Array.isArray(examples) && examples.length > 0) {
+            example = examples[0].swedish || null;
+          }
+        } catch {}
+      }
+
+      return {
+        wordId: row.wordId,
+        word: {
+          id: row.wId,
+          swedish: row.swedish,
+          english: row.english,
+          type: row.type,
+          difficultyLevel: row.difficultyLevel,
+          audioUrl: row.audioUrl,
+          example,
+        },
+        progress: {
+          masteryLevel: row.masteryLevel,
+          successRate: row.successRate,
+          totalAttempts: row.totalAttempts,
+          correctAttempts: row.correctAttempts,
+          lastReviewedAt: row.lastReviewedAt,
+        },
+      };
+    });
+
+    return c.json({ success: true, words, totalCount });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
 // POST /api/progress/flashcards
 progressRoutes.post('/flashcards', async (c) => {
   try {

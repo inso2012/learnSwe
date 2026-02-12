@@ -26,7 +26,7 @@ learningRoutes.get('/flashcards', async (c) => {
 
     // Get review words (due for review)
     let reviewQuery = `
-      SELECT uwp.*, w.id as wId, w.english, w.swedish, w.type, w.difficultyLevel, w.createdAt as wCreatedAt
+      SELECT uwp.*, w.id as wId, w.english, w.swedish, w.type, w.difficultyLevel, w.audioUrl, w.createdAt as wCreatedAt
       FROM user_word_progress uwp
       JOIN words w ON uwp.wordId = w.id
       WHERE uwp.userId = ? AND uwp.nextReviewDate <= ? AND uwp.masteryLevel IN ('learning', 'practicing')
@@ -88,6 +88,7 @@ learningRoutes.get('/flashcards', async (c) => {
         swedish: rw.swedish,
         type: rw.type,
         difficultyLevel: rw.difficultyLevel,
+        audioUrl: rw.audioUrl,
         createdAt: rw.wCreatedAt,
         progress: {
           masteryLevel: rw.masteryLevel,
@@ -199,6 +200,7 @@ learningRoutes.get('/quiz/vocabulary', async (c) => {
           type: questionType,
           wordType: word.type,
           difficulty: word.difficultyLevel,
+          audioUrl: word.audioUrl,
         };
       })
     );

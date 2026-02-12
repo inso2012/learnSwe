@@ -5,6 +5,7 @@
 import { apiFetch } from './api.js';
 import { checkAuth } from './auth.js';
 import { showError, showAlert, showSuccess } from './modal.js';
+import { createAudioButton } from './audio.js';
 import './nav.js';
 
 // State management
@@ -164,7 +165,7 @@ function displayWords(words) {
                        onchange="handleWordSelection(${item.wordId}, this.checked)">
 
                 <div class="word-header">
-                    <div class="swedish-word">${escapeHtml(word.swedish)}</div>
+                    <div class="swedish-word">${escapeHtml(word.swedish)}${word.audioUrl ? `<span class="audio-placeholder" data-audio-url="${escapeHtml(word.audioUrl)}"></span>` : ''}</div>
                     <div class="english-word">${escapeHtml(word.english)}</div>
                     <span class="word-type-badge">${word.type}</span>
                 </div>
@@ -196,6 +197,17 @@ function displayWords(words) {
     }).join('');
 
     wordsGrid.innerHTML = wordsHTML;
+
+    // Replace audio placeholders with actual audio buttons
+    wordsGrid.querySelectorAll('.audio-placeholder').forEach(placeholder => {
+        const audioUrl = placeholder.dataset.audioUrl;
+        const audioBtn = createAudioButton(audioUrl);
+        if (audioBtn) {
+            placeholder.replaceWith(audioBtn);
+        } else {
+            placeholder.remove();
+        }
+    });
 }
 
 function updateStats() {

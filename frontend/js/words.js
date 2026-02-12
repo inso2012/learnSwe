@@ -1,6 +1,7 @@
 // Words page module
 import { apiFetch } from './api.js';
 import { verifyToken } from './auth.js';
+import { createAudioButton, playAudio } from './audio.js';
 import './nav.js';
 
 let currentPage = 1;
@@ -98,8 +99,19 @@ function updateTable() {
 
     words.forEach(word => {
         const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${word.swedish || '-'}</td>
+        const swedishCell = document.createElement('td');
+        swedishCell.textContent = word.swedish || '-';
+        if (word.audioUrl) {
+            const audioBtn = createAudioButton(word.audioUrl);
+            if (audioBtn) {
+                audioBtn.style.marginLeft = '6px';
+                swedishCell.appendChild(audioBtn);
+            }
+        }
+        row.appendChild(swedishCell);
+
+        const remainingCells = document.createElement('template');
+        remainingCells.innerHTML = `
             <td>${word.english || '-'}</td>
             <td>${word.type || '-'}</td>
             <td>${word.example || '-'}</td>
@@ -109,6 +121,7 @@ function updateTable() {
                 </button>
             </td>
         `;
+        row.appendChild(remainingCells.content);
         tableBody.appendChild(row);
     });
 }

@@ -6,6 +6,7 @@
 import { apiFetch } from './api.js';
 import { checkAuth, verifyToken } from './auth.js';
 import { showError, showAlert } from './modal.js';
+import { createAudioButton } from './audio.js';
 import './nav.js';
 
 // ============================================================================
@@ -311,7 +312,11 @@ class FlashcardLearning {
         if (this.answerButtons) this.answerButtons.classList.add('hidden');
 
         if (this.wordType) this.wordType.textContent = card.type || 'word';
-        if (this.wordText) this.wordText.textContent = card.swedish;
+        if (this.wordText) {
+            this.wordText.textContent = card.swedish;
+            const audioBtn = createAudioButton(card.audioUrl);
+            if (audioBtn) this.wordText.appendChild(audioBtn);
+        }
         if (this.difficultyBadge) this.difficultyBadge.textContent = `Level ${card.difficultyLevel || 1}`;
 
         if (this.masteryInfo && card.progress) {
