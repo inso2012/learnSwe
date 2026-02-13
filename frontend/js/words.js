@@ -1,11 +1,11 @@
 // Words page module
 import { apiFetch } from './api.js';
 import { verifyToken } from './auth.js';
-import { createAudioButton, playAudio } from './audio.js';
+import { createAudioButton } from './audio.js';
 import './nav.js';
 
 let currentPage = 1;
-let pageSize = 20;
+let pageSize = 50;
 let totalWords = 0;
 let words = [];
 let currentSort = 'swedish-asc';
@@ -52,7 +52,7 @@ function setupEventListeners() {
 
 async function loadWords() {
     try {
-        const response = await apiFetch(`/api/words?page=${currentPage}&limit=${pageSize}`);
+        const response = await apiFetch(`/api/words?page=${currentPage}&limit=${pageSize}&sort=${currentSort}`);
 
         if (!response.ok) {
             throw new Error('Failed to fetch words');
@@ -62,8 +62,7 @@ async function loadWords() {
 
         if (data.success && Array.isArray(data.data)) {
             words = data.data;
-            totalWords = data.data.length;
-            sortWords();
+            totalWords = data.totalCount || data.data.length;
         } else {
             words = [];
             totalWords = 0;
@@ -176,21 +175,6 @@ function addEllipsis() {
     ellipsis.className = 'page-ellipsis';
     ellipsis.textContent = '...';
     pageNumbersDiv.appendChild(ellipsis);
-}
-
-function sortWords() {
-    const [field, direction] = currentSort.split('-');
-
-    words.sort((a, b) => {
-        let aVal = (a[field] || '').toLowerCase();
-        let bVal = (b[field] || '').toLowerCase();
-
-        if (direction === 'asc') {
-            return aVal.localeCompare(bVal, 'sv');
-        } else {
-            return bVal.localeCompare(aVal, 'sv');
-        }
-    });
 }
 
 function updateDisplayRange() {

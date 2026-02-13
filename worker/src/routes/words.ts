@@ -21,8 +21,31 @@ wordRoutes.post('/', async (c) => {
 // GET /api/words
 wordRoutes.get('/', async (c) => {
   try {
-    const words = await getWords(c.env.DB);
-    return c.json({ success: true, data: words });
+    const page = parseInt(c.req.query('page') || '1');
+    const limit = parseInt(c.req.query('limit') || '50');
+    const sort = c.req.query('sort') || 'swedish-asc';
+    const offset = (page - 1) * limit;
+
+    const validSortColumns: Record<string, string> = {
+      swedish: 'swedish',
+      english: 'english',
+      type: 'type',
+    };
+    const [field, direction] = sort.split('-');
+    const sortColumn = validSortColumns[field] || 'swedish';
+    const sortDir = direction === 'desc' ? 'DESC' : 'ASC';
+
+    const countResult = await c.env.DB
+      .prepare('SELECT COUNT(*) as total FROM words')
+      .first<{ total: number }>();
+    const totalCount = countResult?.total || 0;
+
+    const { results } = await c.env.DB
+      .prepare(`SELECT * FROM words ORDER BY ${sortColumn} COLLATE NOCASE ${sortDir} LIMIT ? OFFSET ?`)
+      .bind(limit, offset)
+      .all();
+
+    return c.json({ success: true, data: results, totalCount });
   } catch (error: any) {
     return c.json({ success: false, error: error.message }, 500);
   }

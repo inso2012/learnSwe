@@ -102,11 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.removeItem('userFullName');
                     localStorage.removeItem('userRegistrationDate');
                     setToken(token);
-
-                    showModal('Success', 'Login successful!');
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1000);
+                    window.location.href = 'dashboard.html';
                 } else {
                     showModal('Success', 'Registration successful! Please login.');
                     setTimeout(() => {
