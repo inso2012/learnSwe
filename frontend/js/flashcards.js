@@ -254,9 +254,8 @@ class FlashcardLearning {
         this.showLoading(true);
         try {
             const count = parseInt(this.cardCount.value);
-            const difficulty = document.getElementById('difficulty').value;
 
-            const response = await apiFetch(`/api/learning/flashcards?limit=${count}&difficulty=${difficulty}`);
+            const response = await apiFetch(`/api/learning/flashcards?limit=${count}`);
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -274,6 +273,8 @@ class FlashcardLearning {
                 return;
             }
 
+            this.totalCardCount = this.currentCards.length;
+            this.remainingCards = [...this.currentCards];
             this.currentCardIndex = 0;
             this.resetSessionStats();
             this.learnedWords.clear();
@@ -299,7 +300,7 @@ class FlashcardLearning {
     }
 
     async displayCurrentCard() {
-        const card = this.currentCards[this.currentCardIndex];
+        const card = this.remainingCards ? this.remainingCards[0] : this.currentCards[this.currentCardIndex];
         if (!card) return;
 
         this.isAnswerShown = false;
@@ -352,9 +353,24 @@ class FlashcardLearning {
     }
 
     nextCard() {
-        const currentCard = this.currentCards[this.currentCardIndex];
+        const hasRemaining = this.remainingCards && this.remainingCards.length > 0;
 
-        if (this.currentCardIndex < this.currentCards.length - 1) {
+        if (hasRemaining) {
+            this.displayCurrentCard();
+
+            if (this.answerOptions) {
+                const buttons = this.answerOptions.querySelectorAll('.answer-button');
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.className = 'answer-button';
+                });
+            }
+
+            if (this.showAnswerBtn) {
+                this.showAnswerBtn.classList.remove('hidden');
+            }
+        } else if (!this.remainingCards && this.currentCardIndex < this.currentCards.length - 1) {
+            // Fallback for review/practice mode sessions that don't use remainingCards
             this.currentCardIndex++;
             this.displayCurrentCard();
 
@@ -375,20 +391,23 @@ class FlashcardLearning {
     }
 
     updateProgress() {
-        const progress = ((this.currentCardIndex + 1) / this.currentCards.length) * 100;
+        const completed = this.totalCardCount ? this.totalCardCount - (this.remainingCards ? this.remainingCards.length : 0) : this.currentCardIndex;
+        const total = this.totalCardCount || this.currentCards.length;
+        const progress = total > 0 ? (completed / total) * 100 : 0;
         const progressBar = document.querySelector('.progress-bar');
         if (progressBar) {
             progressBar.style.width = `${progress}%`;
         }
 
+        const remaining = this.remainingCards ? this.remainingCards.length : (this.currentCards.length - this.currentCardIndex);
         const progressText = document.getElementById('progressText');
         if (progressText) {
-            progressText.textContent = `Card ${this.currentCardIndex + 1} of ${this.currentCards.length}`;
+            progressText.textContent = `${completed} done, ${remaining} remaining`;
         }
     }
 
     showNoCardsMessage() {
-        showAlert('No cards available for your current selection. Try adjusting the difficulty level or number of cards.', 'No Cards Available');
+        showAlert('No cards available. Please try again later.', 'No Cards Available');
         this.showLoading(false);
     }
 
@@ -450,7 +469,7 @@ class FlashcardLearning {
         this.isProcessingAnswer = true;
 
         const isCorrect = button.dataset.correct === 'true';
-        const currentCard = this.currentCards[this.currentCardIndex];
+        const currentCard = this.remainingCards ? this.remainingCards[0] : this.currentCards[this.currentCardIndex];
 
         button.classList.add(isCorrect ? 'correct' : 'incorrect');
 
@@ -477,6 +496,17 @@ class FlashcardLearning {
                 btn.classList.add('correct');
             }
         });
+
+        // Manage remaining cards pool
+        if (this.remainingCards) {
+            // Remove current card from front
+            this.remainingCards.shift();
+            if (!isCorrect) {
+                // Re-insert at a random later position for retry
+                const insertAt = Math.floor(Math.random() * this.remainingCards.length) + 1;
+                this.remainingCards.splice(Math.min(insertAt, this.remainingCards.length), 0, currentCard);
+            }
+        }
 
         if (this.isReviewSession) {
             if (isCorrect) {
@@ -540,16 +570,11 @@ class FlashcardLearning {
 
         this.showLoading(true);
         try {
-            const actuallyShownCards = this.currentCards.slice(0, this.currentCardIndex + 1);
-            const shownWords = actuallyShownCards.map(card => card.swedish);
-
-            if (this.learnedWords.size > actuallyShownCards.length) {
-                throw new Error('Data integrity error: Cannot have more learned words than shown cards');
-            }
+            const shownWords = this.currentCards.map(card => card.swedish);
 
             const payload = {
                 sessionStats: this.sessionStats,
-                cards: actuallyShownCards,
+                cards: this.currentCards,
                 learnedWords: Array.from(this.learnedWords),
                 shownWords: shownWords
             };
@@ -783,6 +808,8 @@ class FlashcardLearning {
         this.setupSection.classList.remove('hidden');
 
         this.currentCards = [];
+        this.remainingCards = null;
+        this.totalCardCount = 0;
         this.currentCardIndex = 0;
         this.sessionStats = {
             startTime: null,

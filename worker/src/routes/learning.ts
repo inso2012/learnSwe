@@ -16,101 +16,15 @@ learningRoutes.use('*', authenticateToken);
 // GET /api/learning/flashcards
 learningRoutes.get('/flashcards', async (c) => {
   try {
-    const userId = c.get('userId');
     const db = c.env.DB;
     const limit = Math.min(Math.max(parseInt(c.req.query('limit') || '10'), 1), 50);
-    const difficulty = c.req.query('difficulty');
 
-    const difficultyFilter = difficulty && difficulty !== 'all' ? parseInt(difficulty) : null;
-    const timestamp = new Date().toISOString();
-
-    // Get review words (due for review)
-    let reviewQuery = `
-      SELECT uwp.*, w.id as wId, w.english, w.swedish, w.type, w.difficultyLevel, w.audioUrl, w.createdAt as wCreatedAt
-      FROM user_word_progress uwp
-      JOIN words w ON uwp.wordId = w.id
-      WHERE uwp.userId = ? AND uwp.nextReviewDate <= ? AND uwp.masteryLevel IN ('learning', 'practicing')
-    `;
-    const reviewBindings: (string | number)[] = [userId, timestamp];
-
-    if (difficultyFilter) {
-      reviewQuery += ' AND w.difficultyLevel = ?';
-      reviewBindings.push(difficultyFilter);
-    }
-
-    reviewQuery += ' ORDER BY uwp.nextReviewDate ASC LIMIT ?';
-    reviewBindings.push(Math.ceil(limit * 0.7));
-
-    const { results: reviewWords } = await db
-      .prepare(reviewQuery)
-      .bind(...reviewBindings)
-      .all();
-
-    const reviewWordsCount = reviewWords.length;
-    const remainingSlots = limit - reviewWordsCount;
-
-    // Get seen word IDs
-    const { results: seenRows } = await db
-      .prepare('SELECT wordId FROM user_word_progress WHERE userId = ?')
-      .bind(userId)
-      .all<{ wordId: number }>();
-
-    const seenWordIds = seenRows.map((r) => r.wordId);
-
-    // Get new words
-    let newWordQuery = 'SELECT * FROM words WHERE 1=1';
-    const newBindings: (string | number)[] = [];
-
-    if (seenWordIds.length > 0) {
-      const { placeholders, bindings } = inClause(seenWordIds);
-      newWordQuery += ` AND id NOT IN ${placeholders}`;
-      newBindings.push(...bindings);
-    }
-
-    if (difficultyFilter) {
-      newWordQuery += ' AND difficultyLevel = ?';
-      newBindings.push(difficultyFilter);
-    }
-
-    newWordQuery += ' ORDER BY difficultyLevel ASC, createdAt ASC LIMIT ?';
-    newBindings.push(remainingSlots > 0 ? remainingSlots : 3);
-
-    const { results: newWords } = await db
-      .prepare(newWordQuery)
-      .bind(...newBindings)
+    const { results: words } = await db
+      .prepare('SELECT * FROM words ORDER BY RANDOM() LIMIT ?')
+      .bind(limit)
       .all<Word>();
 
-    // Combine and format
-    const allWords = [
-      ...reviewWords.map((rw: any) => ({
-        id: rw.wId,
-        english: rw.english,
-        swedish: rw.swedish,
-        type: rw.type,
-        difficultyLevel: rw.difficultyLevel,
-        audioUrl: rw.audioUrl,
-        createdAt: rw.wCreatedAt,
-        progress: {
-          masteryLevel: rw.masteryLevel,
-          correctAttempts: rw.correctAttempts,
-          totalAttempts: rw.totalAttempts,
-          successRate: rw.totalAttempts > 0 ? ((rw.correctAttempts / rw.totalAttempts) * 100).toFixed(1) : 0,
-        },
-      })),
-      ...newWords.map((word) => ({
-        ...word,
-        progress: { masteryLevel: 'new', correctAttempts: 0, totalAttempts: 0, successRate: 0 },
-      })),
-    ];
-
-    // Shuffle
-    const shuffled = allWords.sort(() => Math.random() - 0.5);
-
-    return c.json({
-      success: true,
-      data: shuffled.slice(0, limit),
-      meta: { reviewWords: reviewWordsCount, newWords: newWords.length, totalAvailable: allWords.length },
-    });
+    return c.json({ success: true, data: words });
   } catch (error: any) {
     return c.json({ success: false, error: error.message }, 500);
   }
